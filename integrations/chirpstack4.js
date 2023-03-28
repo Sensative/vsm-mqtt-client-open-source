@@ -13,7 +13,7 @@ module.exports.api = {
         if (!args.s)
             printUsageAndExit("Chirpstack: -s <server url> is required");
     },
-    connectAndSubscribe: async (args, devices, onUplinkDevicePortBuffer) => {
+    connectAndSubscribe: async (args, devices, onUplinkDevicePortBufferDateLatLng) => {
         args.v && console.log("Trying to connect to " + args.s + " with application " + args.a);
         try {
             const client  = mqtt.connect(args.s);
@@ -45,7 +45,7 @@ module.exports.api = {
                 }
                 /* End Instead */
                 });
-            client.on('message', (topic, message) => {
+            client.on('message', async (topic, message) => {
                 // message is Buffer
                 args.v && console.log(topic, message.toString());
 
@@ -53,7 +53,23 @@ module.exports.api = {
                 const data = Buffer.from(obj.data, "base64");
                 const port = obj.fPort;
                 const id = obj.devEUI;
-                onUplinkDevicePortBuffer(id, port, data);
+                
+                let lat, lng;
+                let date;
+                // Take first gateways lat & lng values, any gateway likely to hear this is likely within 150km
+                if (obj.rxInfo && obj.rxInfo.length > 0) {
+                    let gwinfo = obj.rxInfo[0];
+                    if (gwinfo.location) {
+                        lat = gwinfo.location.latitude;
+                        lng = gwinfo.location.longitude;
+                    }
+                    date = new Date(gwinfo.time);
+                    console.log(gwinfo.time, date);
+                }
+                if (!date)
+                    date = new Date()
+
+                await onUplinkDevicePortBufferDateLatLng(client, id, port, data, date, lat, lng);
             });
             return client;
         } catch (e) {
@@ -73,6 +89,7 @@ module.exports.api = {
             data: data.toString('base64'),
         };
         client.publish(topic, JSON.stringify(obj));
+        args.v && console.log("Publish downlink on port " + port + " data: " + data.toString("hex"));
     },
 }
 

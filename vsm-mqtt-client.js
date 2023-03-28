@@ -22,9 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-const mqtt = require('mqtt')
+const mqtt = require('mqtt');
+
 const fs = require('fs');
 const translator = require('vsm-translator');
+const { loadAlmanac, solvePosition } = require('./loracloudclient');
+const { isDate } = require('util/types');
 
 const printUsageAndExit = () => {
   console.log("Usage: node index.js -f <device id file> -i <integration name> ");
@@ -34,6 +37,7 @@ const printUsageAndExit = () => {
 // Pick up command line options:
 // -i <integration name>
 // -f <File containing list of devEUIs, one on each line
+// -k <api-key>  API key for loracloud
 // -v Run in verbose mode
 // Further options are defined in each integration 
 
@@ -43,6 +47,7 @@ if (!(args.i && args.f))
 
 args.v && console.log("Selected integration: " + args.i);
 args.v && console.log("Device file: " + args.f);
+
 
 if (!fs.existsSync('storage'))
   fs.mkdirSync('storage');
@@ -95,18 +100,86 @@ try {
 console.log("Integration: " + integration.api.getVersionString());
 integration.api.checkArgumentsOrExit(args);
 
-const processRules = (deviceid, next, updates) => {
-  console.log("processRules", deviceid, updates);
+const ASSISTANCE_INTERVAL_S = 60; 
+const downlinkAssistancePositionIfMissing = async (client, deviceid, next, lat, lng) => {
+  if (lat && lng && next && next.gnss) {
+    let updateRequired = false;
+    if (next.gnss.lastAssistanceUpdateAttempt) {
+      lastTime = new Date(next.lastAssistanceUpdateAttempt);
+      now = new Date();
+      if (now.getTime() - lastTime.getTime() > ASSISTANCE_INTERVAL_S*1000) {
+        return null; // Do nothing
+      }
+    } 
+
+    if (!next.gnss.assistanceLatitude || Math.abs(lat - next.gnss.assistanceLatitude) > 0.1)
+      updateRequired = true;
+    if (!next.gnss.assistanceLongitude || Math.abs(lng - next.gnss.assistanceLongitude) > 0.1)
+      updateRequired = true;
+    if (updateRequired) {
+      next.gnss.lastAssistanceUpdateAttempt = new Date();
+
+      const lat16 = Math.round(2048*lat / 90) & 0xffff;
+      const lon16 = Math.round(2048*lng / 180) & 0xffff;
+      let downlink = "01"; // Begin with 01 which indicates that this is a assisted position
+      let str = lat16.toString(16);
+      while (str.length < 4)
+        str = "0"+str;
+      downlink += str;
+      str = lon16.toString(16);
+      while (str.length < 4)
+        str = "0"+str;
+      downlink += str;
+  
+      integration.api.sendDownlink(client, args, deviceid, 21, Buffer.from(downlink, "hex"));
+    }
+  }
+  return next;
+}
+
+const rules = [
+
+  // Solve positions and add the solution to the data
+  async (client, deviceid, next, updates, date, lat, lng) => {
+    if (updates.semtechEncoded) {
+      // Call semtech to resolve the location
+      console.log("New positioning data");
+      let solved = await solvePosition(args, updates);
+      if (solved && solved.result && solved.result.latitude && solved.result.longitude) {
+        // Extra check: If we have a result here but no assistance data in the device, use this to generate an assistance position
+        // and downlink it to the device
+        downlinkAssistancePositionIfMissing(client, deviceid, next, lat, lng);
+        return solved.result;
+      } else {
+        return null;
+      }
+    }
+  },
+
+  // Detect absense of device assistance position OR the too large difference of lat & long vs assistance position
+  async (client, deviceid, next, updates, date, lat, lng) => {
+      downlinkAssistancePositionIfMissing(client, deviceid, next, lat, lng);
+  },
+
+];
+
+const processRules = async (client, deviceid, next, updates, date, lat, lng) => {
+  console.log("processRules - updates:", deviceid, updates);
+  for (let i = 0; i < rules.length; ++i) {
+    synthesized = await rules[i](client, deviceid, next, updates, date, lat, lng);
+    next = { ...next, ...synthesized};
+  }
+  return next;
 }
 
 // Function to handle uplinks for a device id on a port with binary data in buffer
-const onUplinkDevicePortBufferDateLatLng = (deviceid, port, buffer, lat, lng) => {
-  if (!(typeof(deviceid) == "string" && isFinite(port) && Buffer.isBuffer(buffer))) {
+const onUplinkDevicePortBufferDateLatLng = async (client, deviceid, port, buffer, date, lat, lng) => {
+  if (!(typeof(deviceid) == "string" && isFinite(port) && Buffer.isBuffer(buffer) && isDate(date))) {
     console.log("Integration error: Bad parameter to onUplinkDevicePortBuffer");
     throw new Error("Bad parameter");
   }
 
-  console.log("Handling uplink: device=" + deviceid + " port="+port + " buffer=" + buffer.toString("hex"));
+  console.log("Uplink: device=" + deviceid + " port="+port + " buffer=" + buffer.toString("hex") + " date="+ date.toISOString() + " lat="+lat + " lng="+lng);
 
   // Read previous state for this node
   let previous = {};
@@ -123,12 +196,12 @@ const onUplinkDevicePortBufferDateLatLng = (deviceid, port, buffer, lat, lng) =>
     encodedData : {
         port : port,
         hexEncoded : buffer.toString('hex'),
-        timestamp: new Date(),  // TBD if this should be given by the integration instead?
+        timestamp: date,  // TBD if this should be given by the integration instead?
     }
   }
   let result = {}
   try {
-    let returned = translator.translate(iotnode);
+    const returned = translator.translate(iotnode);
     result = returned.result;
     let timeseries = returned.timeseries;
     // For now since there is no underlying timeseries database, ignore the timeseries part of the result
@@ -139,7 +212,7 @@ const onUplinkDevicePortBufferDateLatLng = (deviceid, port, buffer, lat, lng) =>
   }
 
   let next = {...iotnode, ...result};
-  processRules(next, result);
+  next = await processRules(client, deviceid, next, result, date, lat, lng);
 
   try {
     // Write the updated data to some database instead, or push it somewhere.
@@ -158,7 +231,7 @@ const run = async () => {
   // Let the integration create connection and add required subscriptions
   let client = undefined;
   try {
-    client = await integration.api.connectAndSubscribe(args, devices, onUplinkDevicePortBuffer);
+    client = await integration.api.connectAndSubscribe(args, devices, onUplinkDevicePortBufferDateLatLng);
   } catch (e) {
     console.log("Failed to connect and subscribe: " + e.message);
     process.exit(1);
