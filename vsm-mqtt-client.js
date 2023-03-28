@@ -24,6 +24,7 @@ SOFTWARE.
 
 const mqtt = require('mqtt')
 const fs = require('fs');
+const translator = require('vsm-translator');
 
 const printUsageAndExit = () => {
   console.log("Usage: node index.js -f <device id file> -i <integration name> ");
@@ -42,6 +43,9 @@ if (!(args.i && args.f))
 
 args.v && console.log("Selected integration: " + args.i);
 args.v && console.log("Device file: " + args.f);
+
+if (!fs.existsSync('storage'))
+  fs.mkdirSync('storage');
 
 //
 // Create the list of devices (device ID dependent on each integration), as an array of files
@@ -99,6 +103,42 @@ const onUplinkDevicePortBuffer = (deviceid, port, buffer) => {
   }
 
   console.log("Handling uplink: device=" + deviceid + " port="+port + " buffer=" + buffer.toString("hex"));
+
+  // Read previous state for this node
+  let previous = {};
+  try {
+    let buffer = fs.readFileSync(`storage/${deviceid}.json`);
+    previous = JSON.parse(buffer.toString('utf-8'));
+    console.log("previous:", previous);
+  } catch (e) {
+    console.log(`Note: No previous data for device ${deviceid}`);
+  }
+
+  let iotnode = { ...previous, 
+    encodedData : {
+        port : port,
+        hexEncoded : buffer.toString('hex'),
+        timestamp: new Date(),  // TBD if this should be given by the integration instead?
+    }
+  }
+  let result = {}
+  try {
+    let returned = translator.translate(iotnode);
+    result = returned.result;
+    let timeseries = returned.timeseries;
+    // For now since there is no underlying timeseries database, ignore the timeseries part of the result
+    args.v && timeseries && console.log("Ignoring timeseries data:", timeseries);
+  } catch (e) {
+    console.log("Failed translation: ", e.message);
+    fs.writeFileSync(`storage/${deviceid}.err`, e.message);
+  }
+  console.log(JSON.stringify(result));
+  let next = {...iotnode, ...result};
+  try {
+    fs.writeFileSync(`storage/${deviceid}.json`, JSON.stringify(next));
+  } catch (e) {
+    console.log("Failed to write translation state to storage:", e.message);
+  }
 }
 
 const delay = async (ms) => {

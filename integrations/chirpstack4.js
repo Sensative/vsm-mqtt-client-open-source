@@ -30,6 +30,8 @@ module.exports.api = {
                         console.log("Chirpstack subscribe all ok");
                     }
                 })});
+
+                Instead:
                 */
 
                 for (let i = 0; i < devices.length; ++i) {
@@ -40,11 +42,12 @@ module.exports.api = {
                         else
                             args.v && console.log(`Chirpstack subscribed ok to ${topic}`);
                         });
-                    }
+                }
+                /* End Instead */
                 });
             client.on('message', (topic, message) => {
                 // message is Buffer
-                // args.v && console.log(topic, message.toString());
+                args.v && console.log(topic, message.toString());
 
                 const obj = JSON.parse(message.toString('utf-8'));
                 const data = Buffer.from(obj.data, "base64");
@@ -60,7 +63,7 @@ module.exports.api = {
     },
     sendDownlink: async (client, args, deviceId, port, data, confirmed) => {
         if (!Buffer.isBuffer(data))
-            throw new Error("sendDownlink: data must be a buffer object");
+            throw new Error("Chirpstack sendDownlink: data must be a buffer object");
         const devEUI = deviceId.toLowerCase();
         const topic = `application/${args.a}/device/${devEUI}/command/down`;
         const obj = {
