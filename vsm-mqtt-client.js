@@ -214,6 +214,12 @@ const onUplinkDevicePortBufferDateLatLng = async (client, deviceid, port, buffer
     fs.writeFileSync(`storage/${deviceid}.err`, e.message);
   }
 
+  if (!result) {
+    // In case we are just filling up with time series data from previous measurements
+    console.log("No new results from translator\n");
+    return;
+  }
+
   let next = {...iotnode, ...result};
   next = await processRules(client, deviceid, next, result, date, lat, lng);
 

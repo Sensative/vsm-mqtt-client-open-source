@@ -31,6 +31,9 @@ const endpointAlmanac = loracloud + "/api/v1/almanac/full";
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 exports.solvePosition = async (args, data) => {
+    if (!args.k)
+        return;
+
     const isWifi = data.semtechEncoded && (data.semtechEncoded.msgtype === "wifi");
     const endpoint = isWifi ? endpointWifi : endpointGnss;
     let body = isWifi ? data.wifi : (data.semtechEncoded ? data.semtechEncoded : data.semtechGpsEncoded);
@@ -212,6 +215,8 @@ const RRLEDecode = (buf, expectedSize) => {
 }
 
 exports.loadAlmanac = async (args) => {
+    if (!args.k)
+        return;
     console.log(endpointAlmanac);
     const response = await fetch(endpointAlmanac,
         {
