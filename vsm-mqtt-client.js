@@ -30,7 +30,7 @@ const { loadAlmanac, solvePosition } = require('./loracloudclient');
 const { isDate } = require('util/types');
 
 const printUsageAndExit = () => {
-  console.log("Usage: node index.js -f <device id file> -i <integration name> ");
+  console.log("Usage: node index.js [-v] -f <device id file> -i <integration name> -k <loracloud api key>");
   process.exit(1);
 }
 
@@ -105,10 +105,11 @@ const downlinkAssistancePositionIfMissing = async (client, deviceid, next, lat, 
   if (lat && lng && next && next.gnss) {
     let updateRequired = false;
     if (next.gnss.lastAssistanceUpdateAttempt) {
-      lastTime = new Date(next.lastAssistanceUpdateAttempt);
+      lastTime = new Date(next.gnss.lastAssistanceUpdateAttempt);
       now = new Date();
-      if (now.getTime() - lastTime.getTime() > ASSISTANCE_INTERVAL_S*1000) {
-        return null; // Do nothing
+      console.log("Comparing time:", lastTime, now, now.getTime() - lastTime.getTime());
+      if (now.getTime() - lastTime.getTime() < ASSISTANCE_INTERVAL_S*1000) {
+        return next; // Do nothing
       }
     } 
 
@@ -158,6 +159,8 @@ const rules = [
 
   // Detect absense of device assistance position OR the too large difference of lat & long vs assistance position
   async (client, deviceid, next, updates, date, lat, lng) => {
+    // try download from gateway position only if there is no assistance position, else use solutions
+    if (next.gnss && !next.gnss.assistanceLatitude)
       downlinkAssistancePositionIfMissing(client, deviceid, next, lat, lng);
   },
 
