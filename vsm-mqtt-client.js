@@ -95,8 +95,12 @@ try {
 console.log("Integration: " + integration.api.getVersionString());
 integration.api.checkArgumentsOrExit(args);
 
+const processRules = (deviceid, next, updates) => {
+  console.log("processRules", deviceid, updates);
+}
+
 // Function to handle uplinks for a device id on a port with binary data in buffer
-const onUplinkDevicePortBuffer = (deviceid, port, buffer) => {
+const onUplinkDevicePortBufferDateLatLng = (deviceid, port, buffer, lat, lng) => {
   if (!(typeof(deviceid) == "string" && isFinite(port) && Buffer.isBuffer(buffer))) {
     console.log("Integration error: Bad parameter to onUplinkDevicePortBuffer");
     throw new Error("Bad parameter");
@@ -109,11 +113,12 @@ const onUplinkDevicePortBuffer = (deviceid, port, buffer) => {
   try {
     let buffer = fs.readFileSync(`storage/${deviceid}.json`);
     previous = JSON.parse(buffer.toString('utf-8'));
-    console.log("previous:", previous);
+    // args.v && console.log("previous:", previous);
   } catch (e) {
-    console.log(`Note: No previous data for device ${deviceid}`);
+    args.v && console.log(`Note: No previous data for device ${deviceid}`);
   }
 
+  // Run translation
   let iotnode = { ...previous, 
     encodedData : {
         port : port,
@@ -127,14 +132,18 @@ const onUplinkDevicePortBuffer = (deviceid, port, buffer) => {
     result = returned.result;
     let timeseries = returned.timeseries;
     // For now since there is no underlying timeseries database, ignore the timeseries part of the result
-    args.v && timeseries && console.log("Ignoring timeseries data:", timeseries);
+    args.v && timeseries && console.log("Ignoring timeseries data:", JSON.stringify(timeseries));
   } catch (e) {
     console.log("Failed translation: ", e.message);
     fs.writeFileSync(`storage/${deviceid}.err`, e.message);
   }
-  console.log(JSON.stringify(result));
+
   let next = {...iotnode, ...result};
+  processRules(next, result);
+
   try {
+    // Write the updated data to some database instead, or push it somewhere.
+    console.log(JSON.stringify(next));
     fs.writeFileSync(`storage/${deviceid}.json`, JSON.stringify(next));
   } catch (e) {
     console.log("Failed to write translation state to storage:", e.message);
