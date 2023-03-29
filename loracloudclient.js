@@ -31,8 +31,6 @@ const endpointAlmanac = loracloud + "/api/v1/almanac/full";
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 exports.solvePosition = async (args, data) => {
-    console.log("SolvePosition: args.v", args.v, "args.k", args.k);
-
     if (!args.k)
         return;
 
