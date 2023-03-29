@@ -19,7 +19,7 @@ module.exports.api = {
         args.v && console.log("Trying to connect to " + args.s);
         try {
             // Create an MQTT client instance
-/*            const options = {
+            /* const options = {
                 // Clean session
                 clean: true,
                 connectTimeout: 4000,
@@ -32,7 +32,7 @@ module.exports.api = {
             const client  = mqtt.connect(args.s /*, options*/);
 
             client.on('connect', () => {
-                args.v && console.log("Connected to mqtt broker");
+                args.v && console.log("Helium: Connected to mqtt broker");
 
                 for (let i = 0; i < devices.length; ++i) {
                     const topic = `helium/${devices[i].toUpperCase()}/rx`;

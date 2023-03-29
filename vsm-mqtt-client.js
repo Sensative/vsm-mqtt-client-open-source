@@ -31,24 +31,18 @@ const { mergeDeep, delay } = require('./util');
 const { processRules} = require('./rules');
 
 const printUsageAndExit = () => {
-  console.log("Usage: node index.js [-v] -f <device id file> -i <integration name> -k <loracloud api key>");
+  console.log("Usage: node index.js [-v] -f <device id file> -i <integration name> -k <loracloud api key> -o <publisher> -d <decorator>");
   process.exit(1);
 }
 
-// Pick up command line options:
-// -i <integration name>
-// -f <File containing list of devEUIs, one on each line
-// -k <api-key>  API key for loracloud
-// -v Run in verbose mode
-// Further options are defined in each integration 
-
+// Command line options handler (simple one)
 const args = require('minimist')(process.argv.slice(2));
 if (!(args.i && args.f))
   printUsageAndExit();
 
 args.v && console.log("Selected integration: " + args.i);
 args.v && console.log("Device file: " + args.f);
-args.v && console.log("Selected decoration: " + (args.d ? args.d : "default"));
+args.v && console.log("Selected decorator: " + (args.d ? args.d : "default"));
 
 // Initialize and or connect to the storage
 initializeStore();
@@ -67,9 +61,8 @@ if (devices.length == 0) {
 }
 
 //
-// Select which integration to use and load the integration
-// 
-
+// INTEGRATION
+//
 let integration = undefined;
 try {
   integration = require("./integrations/" + args.i);
@@ -85,10 +78,13 @@ try {
 console.log("Integration: " + integration.api.getVersionString());
 integration.api.checkArgumentsOrExit(args);
 
-let decoration;
+//
+// DECORATION
+//
+let decorator;
 try {
-  decoration = require("./decorators/" + (args.d ? args.d : "default"));
-  if (!(decoration.api && decoration.api.decorate && decoration.api.getVersionString)) {
+  decorator = require("./decorators/" + (args.d ? args.d : "default"));
+  if (!(decorator.api && decorator.api.decorate && decorator.api.getVersionString)) {
     console.log("Decoration " + args.d + " lacks a required function");
     process.exit(1);
   }
@@ -96,7 +92,27 @@ try {
   console.log(e.message);
   printUsageAndExit();
 }
-console.log("Decoration: " + decoration.api.getVersionString());
+console.log("Decoration: " + decorator.api.getVersionString());
+
+//
+// PUBLISHER
+// 
+
+let publisher = undefined;
+try {
+  publisher = require("./publishers/" + (args.O ? args.O : "console"));
+  if (!(publisher.api && publisher.api.getVersionString && publisher.api.checkArgumentsOrExit && publisher.api.publish)) {
+    console.log("Publisher " + args.O + " lacks a required function");
+    process.exit(1);
+  }
+} catch (e) {
+  console.log(e.message); 
+  printUsageAndExit();
+}
+// Allow the integration to check its arguments (e.g. server, credentials, etc)
+console.log("Publisher: " + publisher.api.getVersionString());
+publisher.api.checkArgumentsOrExit(args);
+publisher.api.initialize(args);
 
 // Function to handle uplinks for a device id on a port with binary data in buffer
 const onUplinkDevicePortBufferDateLatLng = async (client, deviceid, port, buffer, date, lat, lng) => {
@@ -149,9 +165,8 @@ const onUplinkDevicePortBufferDateLatLng = async (client, deviceid, port, buffer
   // Store the next version of the object representation
   putObjectInStore(deviceid, next);
 
-  // TODO: Push update to downstream
-  console.log("Updated value: ", JSON.stringify(decoration.api.decorate(next)));
-
+  // Publish the data
+  publisher.api.publish(args, deviceid, decorator.api.decorate(next));
 }
 
 const run = async () => {
