@@ -25,10 +25,9 @@ SOFTWARE.
 const mqtt = require('mqtt');
 
 const translator = require('vsm-translator');
-const { loadAlmanac, solvePosition } = require('./loracloudclient');
 const { isDate } = require('util/types');
 const { initializeStore, fetchObjectFromStore, putObjectInStore, putErrorInStore, readDeviceList } = require('./store');
-const { mergeDeep } = require('./util');
+const { mergeDeep, delay } = require('./util');
 const { processRules} = require('./rules');
 
 const printUsageAndExit = () => {
@@ -49,7 +48,7 @@ if (!(args.i && args.f))
 
 args.v && console.log("Selected integration: " + args.i);
 args.v && console.log("Device file: " + args.f);
-
+args.v && console.log("Selected decoration: " + (args.d ? args.d : "default"));
 
 // Initialize and or connect to the storage
 initializeStore();
@@ -82,11 +81,22 @@ try {
   console.log(e.message);
   printUsageAndExit();
 }
-
-// Allow the client to check its arguments (e.g. server, credentials, etc)
+// Allow the integration to check its arguments (e.g. server, credentials, etc)
 console.log("Integration: " + integration.api.getVersionString());
 integration.api.checkArgumentsOrExit(args);
 
+let decoration;
+try {
+  decoration = require("./decorators/" + (args.d ? args.d : "default"));
+  if (!(decoration.api && decoration.api.decorate && decoration.api.getVersionString)) {
+    console.log("Decoration " + args.d + " lacks a required function");
+    process.exit(1);
+  }
+} catch (e) {
+  console.log(e.message);
+  printUsageAndExit();
+}
+console.log("Decoration: " + decoration.api.getVersionString());
 
 // Function to handle uplinks for a device id on a port with binary data in buffer
 const onUplinkDevicePortBufferDateLatLng = async (client, deviceid, port, buffer, date, lat, lng) => {
@@ -136,15 +146,12 @@ const onUplinkDevicePortBufferDateLatLng = async (client, deviceid, port, buffer
 
   next = await processRules(args, integration, client, deviceid, next, result, date, lat, lng);
 
-  // TODO: Push update to downstream
-  console.log("Updated representation: ", JSON.stringify(next));
-
   // Store the next version of the object representation
   putObjectInStore(deviceid, next);
-}
 
-const delay = async (ms) => {
-  await new Promise(resolve => setTimeout(resolve, ms));
+  // TODO: Push update to downstream
+  console.log("Updated value: ", JSON.stringify(decoration.api.decorate(next)));
+
 }
 
 const run = async () => {

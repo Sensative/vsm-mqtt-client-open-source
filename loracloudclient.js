@@ -31,6 +31,8 @@ const endpointAlmanac = loracloud + "/api/v1/almanac/full";
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 exports.solvePosition = async (args, data) => {
+    console.log("SolvePosition: args.v", args.v, "args.k", args.k);
+
     if (!args.k)
         return;
 
@@ -121,6 +123,7 @@ exports.solvePosition = async (args, data) => {
           console.log("API failed: " + endpoint + " " + err.message);
           return null;
         });
+
     args.v && console.log("Resolver response:", response);
     if (isWifi) {
         if (response && response.result && response.result.algorithmType !== "Wifi")
@@ -219,7 +222,16 @@ const RRLEDecode = (buf, expectedSize) => {
     return result;
 }
 
+let almanacCache;
+let almanacTimestamp_ms;
+
+const ALMANAC_CACHE_MAX_AGE_S = 60*60*24;
+
 exports.loadAlmanac = async (args) => {
+    const nowMs = new Date().getTime();
+    if (almanacCache && almanacTimestamp_ms && nowMs-almanacTimestamp_ms < ALMANAC_CACHE_MAX_AGE_S*1000)
+        return almanacCache;
+
     if (!args.k)
         return;
     console.log(endpointAlmanac);
@@ -228,7 +240,7 @@ exports.loadAlmanac = async (args) => {
           method:"GET", 
           headers: {
          //   "Ocp-Apim-Subscription-Key": loraoldcloudapikey,
-            "Authorization" : loranewcloudapikey,
+            "Authorization" : args.k,
             "Content-type" : "application/json"
           },
         })
@@ -258,6 +270,12 @@ exports.loadAlmanac = async (args) => {
         } catch (err) {
             console.log(err);
         }
+    }
+
+    if (response && response.result && response.result.almanac_image) {
+        console.log("ALMANAC ADDED TO CACHE:", response);
+        almanacTimestamp_ms = nowMs;
+        almanacCache = response;
     }
     return response;
 }

@@ -23,8 +23,12 @@ SOFTWARE.
 */
 
 const { mergeDeep } = require('./util');
+const { loadAlmanac, solvePosition } = require('./loracloudclient');
 
 const ASSISTANCE_INTERVAL_S = 60; 
+const MAX_ALMANAC_AGE_S = 60*60*24*30; // This is a monthly process
+const ALMANAC_DOWNLOAD_INTERVAL_S = 60*60 /* 60*60*12 */; // No more frequent tries than this
+
 const downlinkAssistancePositionIfMissing = async (args, integration, client, deviceid, next, lat, lng) => {
   if (lat && lng && next && next.gnss) {
     let updateRequired = false;
@@ -56,11 +60,57 @@ const downlinkAssistancePositionIfMissing = async (args, integration, client, de
         str = "0"+str;
       downlink += str;
   
-      integration.api.sendDownlink(client, args, deviceid, 21, Buffer.from(downlink, "hex"));
+      integration.api.sendDownlink(client, args, deviceid, 21, Buffer.from(downlink, "hex"), false /* confirmed */ );
     }
   }
   return next;
 }
+
+const downlinkAlmanac = async (args, integration, client, deviceid) => {
+    const f = async () => {
+        const almanac = await loadAlmanac(args);
+        if (!(almanac && almanac.result && almanac.result.almanac_image)) {
+            console.log("Bad alamanac data");
+            return;
+        }
+    
+        const compressedAlmanac = almanac.result.almanac_compressed;
+        const image = compressedAlmanac ? compressedAlmanac : almanac.result.almanac_image;
+    
+        let maxDownlinkSize = 40; // Give space for some mac commands
+        const almanacTypeStr = (compressedAlmanac ? "Compressed" : "Full");
+        console.log("Almanac image type: " + almanacTypeStr);
+        console.log("Selected payload size: " + maxDownlinkSize);
+        console.log("Almanac image size: " + image.length / 2 );
+        console.log("Downlink count: " + image.length / 2 / maxDownlinkSize);
+    
+        let chunks = image.match(new RegExp('.{1,' + (maxDownlinkSize*2 /* 40 is randomly selected */ ) + '}', 'g'));
+        console.log("Chunks: " + chunks.length);
+    
+        for (let i = 0; i < chunks.length; ++i) {
+            var data;
+            if (i === 0) // Begin new almanac
+                data = "02";
+            else if (i === chunks.length-1) {
+                if (compressedAlmanac)
+                    data = "05"; // End compressed almanac
+                else
+                    data = "04"; // End uncompressed almanac
+            }
+            else
+                data = "03"; // Plain almanac segment
+            data += chunks[i];
+
+            try {
+                await integration.api.sendDownlink(client, args, deviceid, 21, Buffer.from(data, "hex"), true);
+                console.log(deviceid, almanacTypeStr + " Almanac downlink " + (i+1) + " of " + chunks.length + " - enqueueing");
+            } catch (e) { return; }
+        }
+    }
+    // Do not await the results here
+    f();
+}
+
 
 const rules = [
 
@@ -89,12 +139,34 @@ const rules = [
       downlinkAssistancePositionIfMissing(args, integration, client, deviceid, next, lat, lng);
   },
 
+  // Detect if almanac download is called for
+  async (args, integration, client, deviceid, next, updates, date, lat, lng) => {
+    // Do we know if there is an almanac timestamp?
+    if (!(next.gnss && next.gnss.almanacTimestamp))
+        return next;
+
+    const almanacDate = new Date(next.gnss.almanacTimestamp);
+    if (date.getTime() - almanacDate.getTime() < MAX_ALMANAC_AGE_S*1000)
+        return next; // Unmodified
+
+    const lastAttemptMs = next.gnss.lastAlmanacDownloadAttempt ? new Date(next.gnss.lastAlmanacDownloadAttempt).getTime() : 0;
+    const lastAttemptPeriodS = (date.getTime() - lastAttemptMs)/1000;
+    if (lastAttemptPeriodS < ALMANAC_DOWNLOAD_INTERVAL_S)
+        return next; // Do not attempt a download now
+    next.gnss.lastAlmanacDownloadAttempt = date;
+
+    // Run this asynchronously rather than wait
+    downlinkAlmanac(args, integration, client, deviceid);
+
+    return next;
+  },
+
 ];
 
 module.exports.processRules = async (args, integration, client, deviceid, next, updates, date, lat, lng) => {
-  console.log("processRules - updates:", deviceid, updates);
+  // console.log("processRules - updates:", deviceid, updates);
   for (let i = 0; i < rules.length; ++i) {
-    synthesized = await rules[i](client, deviceid, next, updates, date, lat, lng);
+    synthesized = await rules[i](args, integration, client, deviceid, next, updates, date, lat, lng);
     next = mergeDeep(next, synthesized);
   }
   return next;

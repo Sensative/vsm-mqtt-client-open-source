@@ -4,6 +4,8 @@
 
 const { isDate } = require('util/types');
 
+
+
 const isObject = (item) => {
     return (item && typeof item === 'object' && !Array.isArray(item) && !isDate(item));
 }
@@ -25,4 +27,9 @@ const mergeDeep = (target, source) => {
     return output;
 }
 
+const delay = async (ms) => {
+    await new Promise(resolve => setTimeout(resolve, ms));
+}
+    
 module.exports.mergeDeep = mergeDeep;
+module.exports.delay = delay;
