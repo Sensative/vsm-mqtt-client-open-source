@@ -145,8 +145,9 @@ const onUplinkDevicePortBufferDateLatLng = async (client, deviceid, port, buffer
     const returned = translator.translate(iotnode);
     result = returned.result;
     let timeseries = returned.timeseries;
-    // For now since there is no underlying timeseries database, ignore the timeseries part of the result
-    args.v && timeseries && console.log("Ignoring timeseries data:", JSON.stringify(timeseries));
+    // For now since there is no underlying timeseries database, ignore the timeseries part of the result, 
+    // e.g. data older than the most recent data.
+    args.v && timeseries && console.log("Ignoring historical timeseries data:", JSON.stringify(timeseries));
   } catch (e) {
     console.log("Failed translation: ", e.message);
     putErrorInStore(deviceid, e);
