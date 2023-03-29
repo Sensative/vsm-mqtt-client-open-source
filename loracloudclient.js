@@ -126,6 +126,11 @@ exports.solvePosition = async (args, data) => {
         if (response && response.result && response.result.algorithmType !== "Wifi")
             return {errors:["Got wrong type of response: " + response.result.algorithmType]};
     }
+
+    // A small cludge or two - but positions are not particularily interresting unless they
+    // are timestamped. The resolver can give timestamps, but this is added as an insurance
+    if (response && response.result && response.result.latitude)
+        response.result.positionTimestamp = new Date();
     return response;
 }
 
