@@ -36,13 +36,13 @@ module.exports.initializeStore = () => {
 }
 
 module.exports.fetchObjectFromStore = (deviceid) => {
-    let buffer = fs.readFileSync(`storage/${deviceid}.json`);
+    let buffer = fs.readFileSync(`storage/${deviceid.toLowerCase()}.json`);
     return JSON.parse(buffer.toString('utf-8'));
 }
 
 module.exports.putObjectInStore = (deviceid, obj) => {
     try {
-        fs.writeFileSync(`storage/${deviceid}.json`, JSON.stringify(obj));
+        fs.writeFileSync(`storage/${deviceid.toLowerCase()}.json`, JSON.stringify(obj));
     } catch (e) {
       console.log("Failed to write translation state to storage:", e.message);
     }
@@ -50,7 +50,7 @@ module.exports.putObjectInStore = (deviceid, obj) => {
 
 module.exports.putErrorInStore = (deviceId, e) => {
     let filename = "storage/errors.txt";
-    const text = new Date().toISOString() + " " + deviceId + " " + e.message + "\n";
+    const text = new Date().toISOString() + " " + deviceId.toLowerCase() + " " + e.message + "\n";
     try {
         fs.appendFile(filename, text);
     } catch (e) {}

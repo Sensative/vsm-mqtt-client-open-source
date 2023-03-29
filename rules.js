@@ -66,6 +66,10 @@ const downlinkAssistancePositionIfMissing = async (args, integration, client, de
   return next;
 }
 
+const downlinkCrcRequest = (args, integration, client, deviceid) => {
+    integration.api.sendDownlink(client, args, deviceid, 15, Buffer.from("00", "hex"), false /* confirmed */ );
+}
+
 const downlinkAlmanac = async (args, integration, client, deviceid) => {
     const f = async () => {
         const almanac = await loadAlmanac(args);
@@ -114,6 +118,15 @@ const downlinkAlmanac = async (args, integration, client, deviceid) => {
 
 
 const rules = [
+  // Detect if almanac download is called for
+  async (args, integration, client, deviceid, next, updates, date, lat, lng) => {
+    // Check if the rules CRC is registerred
+    if (next.vsm && next.vsm.rulesCrc32)
+      return next;
+    // This needs to be resolved ASAP
+    downlinkCrcRequest(args, integration, client, deviceid);
+    return next;
+  },
 
   // Solve positions and add the solution to the data
   async (args, integration, client, deviceid, next, updates, date, lat, lng) => {
