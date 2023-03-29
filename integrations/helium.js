@@ -34,8 +34,21 @@ module.exports.api = {
             client.on('connect', () => {
                 args.v && console.log("Helium: Connected to mqtt broker");
 
-                for (let i = 0; i < devices.length; ++i) {
-                    const topic = `helium/${devices[i].toUpperCase()}/rx`;
+                // Do we have a device list?
+                if (Array.isArray(devices) && devices.length > 0) {
+                    for (let i = 0; i < devices.length; ++i) {
+                        const topic = `helium/vsm/rx/${devices[i].toUpperCase()}`;
+                        client.subscribe(topic, (err) => {
+                            if (err)
+                                console.log(`Helium subscribe: ${topic} failed:` + err.message );
+                            else
+                                args.v && console.log(`Helium subscribed ok to ${topic}`);
+                            });
+                    }
+                } else {
+                    // Do a wildcard subscription to any device starting with the assigned range of
+                    // Sensative DevEUIs
+                    const topic = `helium/vsm/rx/#`;
                     client.subscribe(topic, (err) => {
                         if (err)
                             console.log(`Helium subscribe: ${topic} failed:` + err.message );
@@ -43,7 +56,6 @@ module.exports.api = {
                             args.v && console.log(`Helium subscribed ok to ${topic}`);
                         });
                 }
-                /* End Instead */
                 });
             client.on('message', async (topic, message) => {
                 // message is Buffer
@@ -79,7 +91,7 @@ module.exports.api = {
         if (!Buffer.isBuffer(data))
             throw new Error("Helium sendDownlink: data must be a buffer object");
         const devEUI = deviceId.toUpperCase();
-        const topic = `helium/${devEUI}/tx`;
+        const topic = `helium/vsm/tx/${devEUI}`;
         const obj = {
             confirmed,
             port,

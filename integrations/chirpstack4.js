@@ -1,4 +1,5 @@
 const mqtt = require('mqtt')
+const { isDate } = require('util/types');
 
 const printUsageAndExit = (info) => {
     console.log(info);
@@ -34,16 +35,26 @@ module.exports.api = {
                 Instead:
                 */
 
-                for (let i = 0; i < devices.length; ++i) {
-                    const topic = `application/${args.a}/device/${devices[i].toLowerCase()}/event/up`;
+                if (Array.isArray(devices) && devices.length > 0) {
+                    for (let i = 0; i < devices.length; ++i) {
+                        const topic = `application/${args.a}/device/${devices[i].toLowerCase()}/event/up`;
+                        client.subscribe(topic, (err) => {
+                            if (err)
+                                console.log(`Chirpstack subscribe: ${topic} failed:` + err.message );
+                            else
+                                args.v && console.log(`Chirpstack subscribed ok to ${topic}`);
+                            });
+                    }
+                } else {
+                    // Use wildcard for the subscription
+                    const topic = `application/${args.a}/device/+/event/up`;
                     client.subscribe(topic, (err) => {
                         if (err)
                             console.log(`Chirpstack subscribe: ${topic} failed:` + err.message );
                         else
                             args.v && console.log(`Chirpstack subscribed ok to ${topic}`);
-                        });
+                    });
                 }
-                /* End Instead */
                 });
             client.on('message', async (topic, message) => {
                 // message is Buffer
@@ -64,9 +75,8 @@ module.exports.api = {
                         lng = gwinfo.location.longitude;
                     }
                     date = new Date(gwinfo.time);
-                    console.log(gwinfo.time, date);
                 }
-                if (!date)
+                if (! (date && isDate(date)))
                     date = new Date()
 
                 await onUplinkDevicePortBufferDateLatLng(client, id, port, data, date, lat, lng);

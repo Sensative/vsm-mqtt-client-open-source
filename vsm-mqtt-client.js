@@ -22,23 +22,41 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-const mqtt = require('mqtt');
-
 const translator = require('vsm-translator');
-const { isDate } = require('util/types');
 const { initializeStore, fetchObjectFromStore, putObjectInStore, putErrorInStore, readDeviceList } = require('./store');
 const { mergeDeep, delay } = require('./util');
 const { processRules} = require('./rules');
 
-const printUsageAndExit = () => {
-  console.log("Usage: node index.js [-v] -f <device id file> -i <integration name> -k <loracloud api key> -o <publisher> -d <decorator>");
+const isValidDate = (d) => {
+  return d instanceof Date && !isNaN(d);
+}
+
+const isVsmDevice = (deveui) => {
+  if (!deveui.toUpperCase().startsWith("70B3D52C"))
+    return false;
+  if (!deveui.length == 16)
+    return false;
+  
+  // TODO: Filter out deveuis in correct range
+  const id = Number.parseInt(deveui.substr(8, 8), 16);
+  if (id >= 0x0001D4C5 && id < 0x00020000) {
+    return true;
+  }
+  return false;
+}
+
+const printUsageAndExit = (hint) => {
+  console.log("Usage: node index.js [-v] (-f <device id file> | -a) -i <integration name> -k <loracloud api key> -o <publisher> -d <decorator> -O <publisher>");
+  console.log("      " + hint);
   process.exit(1);
 }
 
 // Command line options handler (simple one)
 const args = require('minimist')(process.argv.slice(2));
-if (!(args.i && args.f))
-  printUsageAndExit();
+if (!args.i)
+  printUsageAndExit("-i <Integration name> is required");
+if (!(args.f || args.w))
+  printUsageAndExit("-f <device file> or -w is required");
 
 args.v && console.log("Selected integration: " + args.i);
 args.v && console.log("Device file: " + args.f);
@@ -50,15 +68,15 @@ initializeStore();
 //
 // Create the list of devices (device ID dependent on each integration), as an array of files
 //
-let devices = readDeviceList(args.f);
-if (devices.length == 0) {
+let devices;
+if (args.f) {
+  devices = readDeviceList(args.f);
+  if (devices.length == 0) {
+    console.log("No devices in device file");
+    printUsageAndExit();
+  }
+} else if (!args.w)
   printUsageAndExit();
-}
-
-if (devices.length == 0) {
-  console.log("No devices in device file");
-  printUsageAndExit();
-}
 
 //
 // INTEGRATION
@@ -116,9 +134,18 @@ publisher.api.initialize(args);
 
 // Function to handle uplinks for a device id on a port with binary data in buffer
 const onUplinkDevicePortBufferDateLatLng = async (client, deviceid, port, buffer, date, lat, lng) => {
-  if (!(typeof(deviceid) == "string" && isFinite(port) && Buffer.isBuffer(buffer) && isDate(date))) {
+  if (!(typeof(deviceid) == "string" && isFinite(port) && Buffer.isBuffer(buffer))) {
     console.log("Integration error: Bad parameter to onUplinkDevicePortBuffer");
     throw new Error("Bad parameter");
+  }
+
+  if (!isValidDate(date))
+    date = new Date();
+
+  // If wildcarded, check that we have the correct series of deveuis
+  if (args.w && !isVsmDevice(deviceid)) {
+    args.v && console.log("Ignoring unrecognized device " + deviceid);
+    return;
   }
 
   console.log("Uplink: device=" + deviceid + " port="+port + " buffer=" + buffer.toString("hex") + " date="+ date.toISOString() + " lat="+lat + " lng="+lng);

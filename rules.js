@@ -25,9 +25,9 @@ SOFTWARE.
 const { mergeDeep, delay } = require('./util');
 const { loadAlmanac, solvePosition } = require('./loracloudclient');
 
-const ASSISTANCE_INTERVAL_S = 60; 
-const MAX_ALMANAC_AGE_S =  60*60*24*30; // This is a monthly process
-const ALMANAC_DOWNLOAD_INTERVAL_S = 60*60*12 ; // No more frequent tries than this
+const ASSISTANCE_INTERVAL_S =  60*30; // max 300km/h
+const MAX_ALMANAC_AGE_S =   60*60*24*30; // This is a monthly process
+const ALMANAC_DOWNLOAD_INTERVAL_S = 60*60*12; // No more frequent tries than this
 
 const downlinkAssistancePositionIfMissing = async (args, integration, client, deviceid, next, lat, lng) => {
   if (lat && lng && next && next.gnss) {

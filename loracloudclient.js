@@ -122,7 +122,7 @@ exports.solvePosition = async (args, data) => {
           return null;
         });
 
-    args.v && console.log("Resolver response:", response);
+    args.v && console.log("Semtech solver response:", response);
     if (isWifi) {
         if (response && response.result && response.result.algorithmType !== "Wifi")
             return {errors:["Got wrong type of response: " + response.result.algorithmType]};
