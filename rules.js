@@ -35,7 +35,6 @@ const downlinkAssistancePositionIfMissing = async (args, integration, client, de
     if (next.gnss.lastAssistanceUpdateAttempt) {
       lastTime = new Date(next.gnss.lastAssistanceUpdateAttempt);
       now = new Date();
-      console.log("Comparing time:", lastTime, now, now.getTime() - lastTime.getTime());
       if (now.getTime() - lastTime.getTime() < ASSISTANCE_INTERVAL_S*1000) {
         return next; // Do nothing
       }
