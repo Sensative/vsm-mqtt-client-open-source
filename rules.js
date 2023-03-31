@@ -67,7 +67,16 @@ const downlinkAssistancePositionIfMissing = async (args, integration, client, de
 }
 
 const downlinkCrcRequest = (args, integration, client, deviceid) => {
-    integration.api.sendDownlink(client, args, deviceid, 15, Buffer.from("00", "hex"), false /* confirmed */ );
+  integration.api.sendDownlink(client, args, deviceid, 15, Buffer.from("00", "hex"), false /* confirmed */ );
+}
+
+const downlinkDeviceTimeDelta = (args, integration, client, deviceid, deltaS) => {
+  let buffer = "08";
+  let str = deltaS.toString(16);
+  while (str.length < 8)
+    str = "0"+str;
+  buffer += str;
+  integration.api.sendDownlink(client, args, deviceid, 21, Buffer.from(buffer, "hex"), false /* confirmed */ );
 }
 
 const downlinkAlmanac = async (args, integration, client, deviceid) => {
@@ -118,13 +127,32 @@ const downlinkAlmanac = async (args, integration, client, deviceid) => {
 
 
 const rules = [
-  // Detect if almanac download is called for
+  // Detect if we do not know which application the device is running (meaning it cannot be translated fully)
   async (args, integration, client, deviceid, next, updates, date, lat, lng) => {
     // Check if the rules CRC is registerred
     if (next.vsm && next.vsm.rulesCrc32)
       return next;
     // This needs to be resolved ASAP
     downlinkCrcRequest(args, integration, client, deviceid);
+    return next;
+  },
+
+  // Detect if device time is off, and if so downlink a time correction
+  async (args, integration, client, deviceid, next, updates, date, lat, lng) => {
+    // Check if this update was a gnss message containing deviceTime
+    if (!updates.gnss)
+      return next;
+    if (!(updates.gnss.deviceTime && updates.gnss.deviceTimeTimestamp))
+      return next;
+    let deviceDateS = new Date(updates.gnss.deviceTime).getTime()/1000;
+    let receivedDateS = new Date(updates.gnss.deviceTimeTimestamp).getTime()/1000;
+    let deltaS = receivedDateS - deviceDateS;
+    args.v && console.log("Device time offset: " + deltaS);
+    if (deltaS >= 10 || deltaS <= 10) {
+        // Send downlink
+        console.log("Updating device time for " + deviceid + " by " + deltaS + "s");
+        downlinkDeviceTimeDelta(args, integration, client, deviceid, deltaS);
+    }
     return next;
   },
 
