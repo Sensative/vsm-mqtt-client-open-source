@@ -24,6 +24,8 @@ SOFTWARE.
 
 const { mergeDeep, delay } = require('./util');
 const { loadAlmanac, solvePosition } = require('./loracloudclient');
+const translatorVersion = require('./node_modules/vsm-translator/package.json').version;
+console.log("Translator Version: " + translatorVersion);
 
 const ASSISTANCE_INTERVAL_S =  60*30; // max 300km/h
 const MAX_ALMANAC_AGE_S =   60*60*24*30; // This is a monthly process
@@ -206,6 +208,16 @@ const rules = [
 
     return next;
   },
+
+  // Update translator version
+  async (args, integration, client, deviceid, next, updates, date, lat, lng) => {
+    if (next.vsm) {
+      next.vsm.translatorVersion = translatorVersion;
+    } else 
+      next.vsm = { translatorVersion };
+    return next;
+  },
+
 
 ];
 
