@@ -78,7 +78,7 @@ const downlinkDeviceTimeDelta = (args, integration, client, deviceid, deltaS) =>
   integration.api.sendDownlink(client, args, deviceid, 21, Buffer.from(buffer, "hex"), false /* confirmed */ );
 }
 
-const downlinkAlmanac = async (args, integration, client, deviceid) => {
+const downlinkAlmanac = async (args, integration, client, deviceid, maxSize) => {
     const f = async () => {
         const almanac = await loadAlmanac(args);
         if (!(almanac && almanac.result && almanac.result.almanac_image)) {
@@ -89,7 +89,12 @@ const downlinkAlmanac = async (args, integration, client, deviceid) => {
         const compressedAlmanac = almanac.result.almanac_compressed;
         const image = compressedAlmanac ? compressedAlmanac : almanac.result.almanac_image;
     
-        let maxDownlinkSize = 40; // Give space for some mac commands
+        let maxDownlinkSize = maxSize - 6; // Give space for some mac commands
+        if (maxDownlinkSize < 30) {
+          // Does not make sense with this small downlink size for almanac download
+          console.log("Too many almanac downlinks, cancelling until better connection acheived");
+          return;
+        }
         const almanacTypeStr = (compressedAlmanac ? "Compressed" : "Full");
         console.log("Almanac image type: " + almanacTypeStr);
         console.log("Selected payload size: " + maxDownlinkSize);
@@ -197,7 +202,7 @@ const rules = [
     next.gnss.lastAlmanacDownloadAttempt = date;
 
     // Run this asynchronously rather than wait
-    downlinkAlmanac(args, integration, client, deviceid);
+    downlinkAlmanac(args, integration, client, deviceid, next.encodedData.maxSize);
 
     return next;
   },

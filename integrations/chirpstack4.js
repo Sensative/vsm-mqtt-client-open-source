@@ -6,6 +6,18 @@ const printUsageAndExit = (info) => {
     process.exit(1);
 }
 
+const getMaxSize = (obj) => {
+    if (obj.txInfo && Number.isInteger(obj.txInfo.dr)) {
+        if (obj.txInfo.dr <= 2)
+            return 51;
+        if (obj.txInfo.dr == 3)
+            return 115;
+        return 222;
+    }
+
+    return 51;
+}
+
 module.exports.api = {
     getVersionString: () => { return "Chirpstack 4.x MQTT Integration"; },
     checkArgumentsOrExit: (args) => { 
@@ -64,7 +76,8 @@ module.exports.api = {
                 const data = Buffer.from(obj.data, "base64");
                 const port = obj.fPort;
                 const id = obj.devEUI;
-                
+                const maxSize = getMaxSize(obj);
+
                 let lat, lng;
                 let date;
                 // Take first gateways lat & lng values, any gateway likely to hear this is likely within 150km
@@ -79,7 +92,7 @@ module.exports.api = {
                 if (! (date && isDate(date)))
                     date = new Date()
 
-                await onUplinkDevicePortBufferDateLatLng(client, id, port, data, date, lat, lng);
+                await onUplinkDevicePortBufferDateLatLng(client, id, port, data, date, lat, lng, maxSize);
             });
             return client;
         } catch (e) {

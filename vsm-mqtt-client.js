@@ -133,7 +133,7 @@ publisher.api.checkArgumentsOrExit(args);
 publisher.api.initialize(args);
 
 // Function to handle uplinks for a device id on a port with binary data in buffer
-const onUplinkDevicePortBufferDateLatLng = async (client, deviceid, port, buffer, date, lat, lng) => {
+const onUplinkDevicePortBufferDateLatLng = async (client, deviceid, port, buffer, date, lat, lng, maxSize) => {
   if (!(typeof(deviceid) == "string" && isFinite(port) && Buffer.isBuffer(buffer))) {
     console.log("Integration error: Bad parameter to onUplinkDevicePortBuffer");
     throw new Error("Bad parameter");
@@ -165,6 +165,7 @@ const onUplinkDevicePortBufferDateLatLng = async (client, deviceid, port, buffer
         port : port,
         hexEncoded : buffer.toString('hex'),
         timestamp: date,  // TBD if this should be given by the integration instead?
+        maxSize: maxSize,
     }
   }
   let result = {}

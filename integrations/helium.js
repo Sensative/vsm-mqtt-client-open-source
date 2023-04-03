@@ -5,6 +5,50 @@ const printUsageAndExit = (info) => {
     process.exit(1);
 }
 
+// Try to determine the maximum downlink frame size
+/* TODO: Inventory all these for max size and use in below function
+const sfToSizeTable = {
+"SF12BW125"    : 51,
+"SF11BW125"    : 51,
+"SF10BW125"    : 51,
+"SF9BW125"     : 115,
+"SF8BW125"     : 222,
+"SF7BW125"     : 222,
+"SF12BW250"    : 
+"SF11BW250"    : 
+"SF10BW250"    : 
+"SF9BW250"     : 
+"SF8BW250"     : 
+"SF7BW250"     : 
+"SF12BW500"    : 
+"SF11BW500"    : 
+"SF10BW500"    : 
+"SF9BW500"     : 
+"SF8BW500"     : 
+"SF7BW500"     : 
+"LRFHSS1BW137" : 7),
+"LRFHSS2BW137" : 7),
+"LRFHSS1BW336" : 6),
+"LRFHSS2BW336" : 6),
+"LRFHSS1BW1523": 523),
+"LRFHSS2BW1523": 523),
+"FSK50"        :
+*/
+
+const getMaxSize = (sfbw) => {
+    if (sfbw == "SF12BW125" ||
+        sfbw == "SF11BW125" ||
+        sfbw == "SF10BW125")
+        return 51;
+    if (sfbw == "SF9BW125")
+        return 115;
+    if (sfbw == "SF8BW125" ||
+        sfbw == "SF7BW125" ||
+        sfbw == "SF8BW250")
+        return 222;
+    console.log("Warning: Unhandled helium spreading: " + sfbw);
+}
+
 module.exports.api = {
     getVersionString: () => { return "Helium MQTT Integration"; },
     checkArgumentsOrExit: (args) => { 
@@ -69,17 +113,19 @@ module.exports.api = {
                 
                 let lat, lng;
                 let date;
+                let maxSize = 40; // Some default
                 // Take first gateways lat & lng values, any gateway likely to hear this is likely within 150km
                 if (obj.hotspots && obj.hotspots.length > 0) {
                     let gwinfo = obj.hotspots[0];
                     lat = gwinfo.lat;
                     lng = gwinfo.long;
+                    maxSize = getMaxSize(gwinfo.spreading);
                 }
                 date = new Date(obj.reported_at);
                 if (!date)
                     date = new Date()
 
-                await onUplinkDevicePortBufferDateLatLng(client, id, port, data, date, lat, lng);
+                await onUplinkDevicePortBufferDateLatLng(client, id, port, data, date, lat, lng, maxSize);
             });
             return client;
         } catch (e) {
