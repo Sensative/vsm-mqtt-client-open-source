@@ -74,7 +74,7 @@ module.exports.api = {
 
                 const obj = JSON.parse(message.toString('utf-8'));
                 if (!obj.data)
-                    throw new Error("Chirpstack: No data in uplink");
+                    return;
                 const data = Buffer.from(obj.data, "base64");
                 const port = obj.fPort;
                 const id = obj.devEUI;
