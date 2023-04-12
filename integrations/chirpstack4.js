@@ -73,6 +73,8 @@ module.exports.api = {
                 args.v && console.log(topic, message.toString());
 
                 const obj = JSON.parse(message.toString('utf-8'));
+                if (!obj.data)
+                    throw new Exception("No data");
                 const data = Buffer.from(obj.data, "base64");
                 const port = obj.fPort;
                 const id = obj.devEUI;
