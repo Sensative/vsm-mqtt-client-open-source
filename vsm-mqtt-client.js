@@ -39,7 +39,7 @@ const isVsmDevice = (deveui) => {
   
   // TODO: Filter out deveuis in correct range
   const id = Number.parseInt(deveui.substr(8, 8), 16);
-  if (id >= 0x0001D4C5 && id < 0x00020000) {
+  if (id >= 0x0001D4C5 && id < 0x0001E000) {
     return true;
   }
   return false;
