@@ -7,10 +7,10 @@ const printUsageAndExit = (info) => {
 }
 
 const getMaxSize = (obj) => {
-    if (obj.txInfo && Number.isInteger(obj.txInfo.dr)) {
-        if (obj.txInfo.dr <= 2)
+    if (Number.isInteger(obj.dr)) {
+        if (obj.dr <= 2)
             return 51;
-        if (obj.txInfo.dr == 3)
+        if (obj.dr == 3)
             return 115;
         return 222;
     }
@@ -77,7 +77,7 @@ module.exports.api = {
                     return;
                 const data = Buffer.from(obj.data, "base64");
                 const port = obj.fPort;
-                const id = obj.devEUI;
+                const id = obj.deviceInfo.devEui;
                 const maxSize = getMaxSize(obj);
 
                 let lat, lng;
