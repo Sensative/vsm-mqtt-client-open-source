@@ -108,10 +108,10 @@ module.exports.api = {
         const devEUI = deviceId.toLowerCase();
         const topic = `application/${args.a}/device/${devEUI}/command/down`;
         const obj = {
-            devEUI,
+            devEui: devEUI,
             confirmed,
             fPort: port,
-            data: data.toString('base64'),
+            payload: data.toString('base64'),
         };
         client.publish(topic, JSON.stringify(obj));
         args.v && console.log("Publish downlink on port " + port + " data: " + data.toString("hex"));
