@@ -19,10 +19,10 @@ const getMaxSize = (obj) => {
 }
 
 module.exports.api = {
-    getVersionString: () => { return "Chirpstack 4.x MQTT Integration"; },
+    getVersionString: () => { return "Chirpstack 3.x MQTT Integration"; },
     checkArgumentsOrExit: (args) => { 
-        if (!args.a)
-            printUsageAndExit("Chirpstack: -a <application-id> is required");
+        if (!args.a || !isFinite(args.a))
+            printUsageAndExit("Chirpstack: -a <application-id> is required and should be an integer number");
         if (!args.s)
             printUsageAndExit("Chirpstack: -s <server url> is required");
     },
