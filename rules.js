@@ -23,7 +23,6 @@ SOFTWARE.
 */
 
 const { mergeDeep, delay } = require('./util');
-const { loadAlmanac, solvePosition } = require('./loracloudclient');
 const translatorVersion = require('./node_modules/vsm-translator/package.json').version;
 console.log("Translator Version: " + translatorVersion);
 
@@ -31,7 +30,7 @@ const ASSISTANCE_INTERVAL_S =  60*30; // max 300km/h
 const MAX_ALMANAC_AGE_S =   60*60*24*30; // This is a monthly process
 const ALMANAC_DOWNLOAD_INTERVAL_S = 60*60*12; // No more frequent tries than this
 
-const downlinkAssistancePositionIfMissing = async (args, integration, client, deviceid, next, lat, lng) => {
+const downlinkAssistancePositionIfMissing = async (args, integration, client, solver, deviceid, next, lat, lng) => {
   if (lat && lng && next && next.gnss) {
     let updateRequired = false;
     if (next.gnss.lastAssistanceUpdateAttempt) {
@@ -80,9 +79,9 @@ const downlinkDeviceTimeDelta = (args, integration, client, deviceid, deltaS) =>
   integration.api.sendDownlink(client, args, deviceid, 21, Buffer.from(buffer, "hex"), false /* confirmed */ );
 }
 
-const downlinkAlmanac = async (args, integration, client, deviceid, maxSize) => {
+const downlinkAlmanac = async (args, integration, client, solver, deviceid, maxSize) => {
     const f = async () => {
-        const almanac = await loadAlmanac(args);
+        const almanac = await solver.api.loadAlmanac(args);
         if (!(almanac && almanac.result && almanac.result.almanac_image)) {
             console.log("Bad alamanac data");
             return;
@@ -134,7 +133,7 @@ const downlinkAlmanac = async (args, integration, client, deviceid, maxSize) => 
 
 const rules = [
   // Detect if we do not know which application the device is running (meaning it cannot be translated fully)
-  async (args, integration, client, deviceid, next, updates, date, lat, lng) => {
+  async (args, integration, client, solver, deviceid, next, updates, date, lat, lng) => {
     // Check if the rules CRC is registerred
     if (next.vsm && next.vsm.rulesCrc32)
       return next;
@@ -144,7 +143,7 @@ const rules = [
   },
 
   // Detect if device time is off, and if so downlink a time correction
-  async (args, integration, client, deviceid, next, updates, date, lat, lng) => {
+  async (args, integration, client, solver, deviceid, next, updates, date, lat, lng) => {
     // Check if this update was a gnss message containing deviceTime
     if (!updates.gnss)
       return next;
@@ -163,11 +162,11 @@ const rules = [
   },
 
   // Solve positions and add the solution to the data
-  async (args, integration, client, deviceid, next, updates, date, lat, lng) => {
+  async (args, integration, client, solver, deviceid, next, updates, date, lat, lng) => {
     if (updates.semtechEncoded) {
       // Call semtech to resolve the location
       console.log("New positioning data");
-      let solved = await solvePosition(args, updates);
+      let solved = await solver.api.solvePosition(args, updates);
       if (solved && solved.result && solved.result.latitude && solved.result.longitude) {
         // Extra check: If we have a result here but no assistance data in the device, use this to generate an assistance position
         // and downlink it to the device
@@ -181,14 +180,14 @@ const rules = [
 
   // Detect absense of device assistance position OR the too large difference of lat & long vs assistance position,
   // try to solve that by downloading new assistance position
-  async (args, integration, client, deviceid, next, updates, date, lat, lng) => {
+  async (args, integration, client, solver, deviceid, next, updates, date, lat, lng) => {
     // try download from gateway position only if there is no assistance position, else use solutions
     if (next.gnss && !next.gnss.assistanceLatitude)
       downlinkAssistancePositionIfMissing(args, integration, client, deviceid, next, lat, lng);
   },
 
   // Detect if almanac download is called for
-  async (args, integration, client, deviceid, next, updates, date, lat, lng) => {
+  async (args, integration, client, solver, deviceid, next, updates, date, lat, lng) => {
     // Do we know if there is an almanac timestamp?
     if (!(next.gnss && next.gnss.almanacTimestamp))
         return next;
@@ -204,27 +203,25 @@ const rules = [
     next.gnss.lastAlmanacDownloadAttempt = date;
 
     // Run this asynchronously rather than wait
-    downlinkAlmanac(args, integration, client, deviceid, next.encodedData.maxSize);
+    downlinkAlmanac(args, integration, client, solver, deviceid, next.encodedData.maxSize);
 
     return next;
   },
 
   // Update translator version
-  async (args, integration, client, deviceid, next, updates, date, lat, lng) => {
+  async (args, integration, client, solver, deviceid, next, updates, date, lat, lng) => {
     if (next.vsm) {
       next.vsm.translatorVersion = translatorVersion;
     } else 
       next.vsm = { translatorVersion };
     return next;
   },
-
-
 ];
 
-module.exports.processRules = async (args, integration, client, deviceid, next, updates, date, lat, lng) => {
+module.exports.processRules = async (args, integration, client, solver, deviceid, next, updates, date, lat, lng) => {
   // console.log("processRules - updates:", deviceid, updates);
   for (let i = 0; i < rules.length; ++i) {
-    synthesized = await rules[i](args, integration, client, deviceid, next, updates, date, lat, lng);
+    synthesized = await rules[i](args, integration, client, solver, deviceid, next, updates, date, lat, lng);
     next = mergeDeep(next, synthesized);
   }
   return next;

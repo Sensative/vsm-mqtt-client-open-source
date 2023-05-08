@@ -132,6 +132,26 @@ console.log("Publisher: " + publisher.api.getVersionString());
 publisher.api.checkArgumentsOrExit(args);
 publisher.api.initialize(args);
 
+//
+// SOLVER
+// 
+
+let solver = undefined;
+try {
+  solver = require("./solvers/" + (args.z ? args.z : "loracloud"));
+  if (!(solver.api && solver.api.getVersionString && solver.api.checkArgumentsOrExit && solver.api.solvePosition && solver.api.loadAlmanac && solver.api.initialize)) {
+    console.log("Solver " + args.z + " lacks a required function");
+    process.exit(1);
+  }
+} catch (e) {
+  console.log(e.message); 
+  printUsageAndExit();
+}
+// Allow the integration to check its arguments (e.g. server, credentials, etc)
+console.log("Positioning Solver: " + solver.api.getVersionString());
+solver.api.checkArgumentsOrExit(args);
+solver.api.initialize(args);
+
 // Function to handle uplinks for a device id on a port with binary data in buffer
 const onUplinkDevicePortBufferDateLatLng = async (client, deviceid, port, buffer, date, lat, lng, maxSize) => {
   if (!(typeof(deviceid) == "string" && isFinite(port) && Buffer.isBuffer(buffer))) {

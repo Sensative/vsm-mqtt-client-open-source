@@ -30,7 +30,7 @@ const endpointAlmanac = loracloud + "/api/v1/almanac/full";
 // import fetch from 'node-fetch'
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-exports.solvePosition = async (args, data) => {
+const solvePosition = async (args, data) => {
     if (!args.k)
         return;
 
@@ -225,7 +225,7 @@ let almanacTimestamp_ms;
 
 const ALMANAC_CACHE_MAX_AGE_S = 60*60*24;
 
-exports.loadAlmanac = async (args) => {
+const loadAlmanac = async (args) => {
     const nowMs = new Date().getTime();
     if (almanacCache && almanacTimestamp_ms && nowMs-almanacTimestamp_ms < ALMANAC_CACHE_MAX_AGE_S*1000)
         return almanacCache;
@@ -278,3 +278,10 @@ exports.loadAlmanac = async (args) => {
     return response;
 }
 
+module.exports.api = {
+    solvePosition,
+    loadAlmanac,
+    checkArgumentsOrExit: (args)=>{if (!args.k) throw new Error("-k <API key> is required for LoraCloud solver"); },
+    getVersionString: ()=>"LoraCloud Solver",
+    initialize: (args) => {}
+};
