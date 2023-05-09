@@ -163,14 +163,20 @@ const rules = [
 
   // Solve positions and add the solution to the data
   async (args, integration, client, solver, deviceid, next, updates, date, lat, lng) => {
+    console.log('UPDATESSSSSSSSSSSSS', updates)
     if (updates.semtechEncoded) {
       // Call semtech to resolve the location
       console.log("New positioning data");
+      console.log('YALLAAAAAAAAAAAAAAAAAA')
+      console.log('YALLAAAAAAAAAAAAAAAAAA')
+      console.log('YALLAAAAAAAAAAAAAAAAAA')
+      console.log('YALLAAAAAAAAAAAAAAAAAA')
+      console.log('YALLAAAAAAAAAAAAAAAAAA')
       let solved = await solver.api.solvePosition(args, updates);
       if (solved && solved.result && solved.result.latitude && solved.result.longitude) {
         // Extra check: If we have a result here but no assistance data in the device, use this to generate an assistance position
         // and downlink it to the device
-        downlinkAssistancePositionIfMissing(args, integration, client, deviceid, next, lat, lng);
+        downlinkAssistancePositionIfMissing(args, integration, client, solver, deviceid, next, lat, lng);
         return solved.result;
       } else {
         return null;
@@ -183,7 +189,7 @@ const rules = [
   async (args, integration, client, solver, deviceid, next, updates, date, lat, lng) => {
     // try download from gateway position only if there is no assistance position, else use solutions
     if (next.gnss && !next.gnss.assistanceLatitude)
-      downlinkAssistancePositionIfMissing(args, integration, client, deviceid, next, lat, lng);
+      downlinkAssistancePositionIfMissing(args, integration, client, solver, deviceid, next, lat, lng);
   },
 
   // Detect if almanac download is called for

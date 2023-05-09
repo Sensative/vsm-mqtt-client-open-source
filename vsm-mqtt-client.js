@@ -139,9 +139,16 @@ publisher.api.initialize(args);
 let solver = undefined;
 try {
   solver = require("./solvers/" + (args.z ? args.z : "loracloud"));
-  if (!(solver.api && solver.api.getVersionString && solver.api.checkArgumentsOrExit && solver.api.solvePosition && solver.api.loadAlmanac && solver.api.initialize)) {
-    console.log("Solver " + args.z + " lacks a required function");
-    process.exit(1);
+  if (args.z === 'aws') {
+    if (!(solver.api && solver.api.getVersionString && solver.api.checkArgumentsOrExit && solver.api.solvePosition && solver.api.initialize)) {
+      console.log("Solver " + args.z + " lacks a required function");
+      process.exit(1);
+    }
+  } else {
+    if (!(solver.api && solver.api.getVersionString && solver.api.checkArgumentsOrExit && solver.api.solvePosition && solver.api.loadAlmanac && solver.api.initialize)) {
+      console.log("Solver " + args.z + " lacks a required function");
+      process.exit(1);
+    }
   }
 } catch (e) {
   console.log(e.message); 
@@ -210,7 +217,7 @@ const onUplinkDevicePortBufferDateLatLng = async (client, deviceid, port, buffer
 
   let next = mergeDeep(iotnode, result);
 
-  next = await processRules(args, integration, client, deviceid, next, result, date, lat, lng);
+  next = await processRules(args, integration, client, solver, deviceid, next, result, date, lat, lng);
 
   // Store the next version of the object representation
   putObjectInStore(deviceid, next);
