@@ -1,14 +1,15 @@
+const CONSTANTS = require('../constants');
 const AWS = require('aws-sdk');
 AWS.config.apiVersions = {
-    iotwireless: '2020-11-22',
+    iotwireless: CONSTANTS.AWS.VERSION,
     // other service API versions
 };
 
 // Set the region and user credentials
 const config = {
-    accessKeyId: 'AKIA6NZJE5645HRQPDGV',
-    secretAccessKey: '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',
-    region: 'eu-west-1',
+    accessKeyId: CONSTANTS.AWS.ACCESS_KEY_ID,
+    secretAccessKey: CONSTANTS.AWS.SECRET_ACCESS_KEY,
+    region: CONSTANTS.AWS.REGION,
     // other service API versions
 }
 // Create the service object (IotWireless- Service)
@@ -41,7 +42,7 @@ const solvePosition = async (args, data) => {
     }
     console.log ('Sending request to AWS to resolve position');
     console.log('Params: ', params);
-    const test = iotwireless.getPositionEstimate(JSON.stringify(params), function(err, response) {
+    const test = iotwireless.getPositionEstimate(params, function(err, response) {
       if (err) {
           console.log('Something went wrong when calling "getPositionEstimate"', err, err.stack);
         } else {
