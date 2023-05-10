@@ -1,25 +1,11 @@
-const CONSTANTS = require('../constants');
-const AWS = require('aws-sdk');
-AWS.config.apiVersions = {
-    iotwireless: CONSTANTS.AWS.VERSION,
-    // other service API versions
-};
 
-// Set the region and user credentials
-const config = {
-    accessKeyId: CONSTANTS.AWS.ACCESS_KEY_ID,
-    secretAccessKey: CONSTANTS.AWS.SECRET_ACCESS_KEY,
-    region: CONSTANTS.AWS.REGION,
-    // other service API versions
-}
-// Create the service object (IotWireless- Service)
-const iotwireless = new AWS.IoTWireless(config);
 
+let iotwireless;
 const solvePosition = async (args, data) => {
   console.log('*************************');
   console.log('AWS SOLVER');
   console.log('dataaaaa in aws solver', data);
-  const resultData = {};
+  // const resultData = {};
   // if (!args.k) return;
   
   const isWifi = data.semtechEncoded && (data.semtechEncoded.msgtype === "wifi");
@@ -42,15 +28,15 @@ const solvePosition = async (args, data) => {
     }
     console.log ('Sending request to AWS to resolve position');
     console.log('Params: ', params);
-    const test = iotwireless.getPositionEstimate(params, function(err, response) {
+    iotwireless.getPositionEstimate(params, function(err, response) {
       if (err) {
-          console.log('Something went wrong when calling "getPositionEstimate"', err, err.stack);
-        } else {
+        console.log('Something went wrong when calling "getPositionEstimate" for the WiFi solver', err, err.stack);
+      } else {
           const buf = Buffer.from(response.GeoJsonPayload);
           const decodedString = buf.toString();
           const decodedResponse = JSON.parse(decodedString);
-          args.v && console.log("AWS solver response:", decodedResponse);
-          resultData = {
+          args.v && console.log("AWS WiFi solver response:", decodedResponse);
+           return {
             latitude: decodedResponse?.coordinates[1],
             longitude: decodedResponse?.coordinates[0],
             verticalAccuracy: decodedResponse?.properties?.verticalAccuracy,
@@ -61,19 +47,63 @@ const solvePosition = async (args, data) => {
           }
         }
     });
-    // console.log('Logga test?', test);
-    return resultData;
+    // console.log('RETURNING RESULLLLLLT', resultData);
+    // return resultData;
   } else {
-    console.log('*************************');
-    console.log('GNSS NOT IMPLEMENTED YET');
-    console.log('*************************');
-    return;
+    if (!body.msgtype === 'gnss' || !body.gnss.capture_time || !body.gnss.payload) {
+      console.log('Error, data:', body);
+      throw new Error("Not enough information to resolve Gnss position");
+    } else {
+      const params = {
+        "Gnss": {
+          "CaptureTime": body.gnss.capture_time,
+          "Payload": body.gnss.payload,
+        }
+      };
+      iotwireless.getPositionEstimate(params, function(err, response) {
+        if (err) {
+          console.log('Something went wrong when calling "getPositionEstimate" for the Gnss solver', err, err.stack);
+        } else {
+          const buf = Buffer.from(response.GeoJsonPayload);
+          const decodedString = buf.toString();
+          const decodedResponse = JSON.parse(decodedString);
+          args.v && console.log("AWS Gnss solver response:", decodedResponse);
+           return {
+            latitude: decodedResponse?.coordinates[0],
+            longitude: decodedResponse?.coordinates[1],
+            altitude: decodedResponse?.coordinates[2],
+            verticalAccuracy: decodedResponse?.properties?.verticalAccuracy,
+            verticalConfidenceLevel: decodedResponse?.properties?.verticalConfidenceLevel,
+            horizontalAccuracy: decodedResponse?.properties?.horizontalAccuracy,
+            horizontalConfidenceLevel: decodedResponse?.properties?.horizontalConfidenceLevel,
+            positionTimestamp: decodedResponse?.properties?.timestamp,
+          }
+        }
+      });
+    }
+    iotwireless.
   }
 }
 
 module.exports.api = {
     solvePosition,
-    checkArgumentsOrExit: (args)=>{if (!args.k) throw new Error("-k <Access Key and Secret Key> is required for AWS"); },
+    checkArgumentsOrExit: (args)=>{if (args.z !== 'aws') throw new Error("Flag -z <aws> is required for AWS solver."); },
     getVersionString: ()=>"AWS Solver",
-    initialize: (args) => {}
+    initialize: (args) => {
+      const CONSTANTS = require('../constants');
+      const AWS = require('aws-sdk');
+      AWS.config.apiVersions = {
+        iotwireless: CONSTANTS.AWS.VERSION,
+        // other service API versions
+      };
+      // Set the region and user credentials
+      const config = {
+          accessKeyId: CONSTANTS.AWS.ACCESS_KEY_ID,
+          secretAccessKey: CONSTANTS.AWS.SECRET_ACCESS_KEY,
+          region: CONSTANTS.AWS.REGION,
+          // other service API versions
+      }
+      // Create the service object (IotWireless- Service)
+      iotwireless = new AWS.IoTWireless(config);
+    }
 };
