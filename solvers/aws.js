@@ -81,7 +81,6 @@ const solvePosition = async (args, data) => {
         }
       });
     }
-    iotwireless.
   }
 }
 
