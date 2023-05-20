@@ -318,10 +318,10 @@ util-deprecate@^1.0.1:
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
   integrity sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==
 
-vsm-translator@^0.0.82:
-  version "0.0.82"
-  resolved "https://registry.yarnpkg.com/vsm-translator/-/vsm-translator-0.0.82.tgz#d23a68d9b92e013de4ae6fbc0b001928e4863a56"
-  integrity sha512-7o+LL0JY4qxSSqrDsbLhNABMP37GEawr+Fv+z075HsFX5Adme1+gHHle3ZjHNDG9n86bm6WNZ/FNANLmLXOiSQ==
+vsm-translator@^0.0.87:
+  version "0.0.87"
+  resolved "https://registry.yarnpkg.com/vsm-translator/-/vsm-translator-0.0.87.tgz#f058e93fd34e45497390b8fd667a6826d761d64f"
+  integrity sha512-7KIio4SPFFeYZPxmv76HhexVag3sTVJ+XpVSc9a6TKraTjPs3CZnmUODYEt7i3Suj74d60A2yxHRwG7VNmCp3w==
   dependencies:
     node-fetch "^3.0.0"
 
