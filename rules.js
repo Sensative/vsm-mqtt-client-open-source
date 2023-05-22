@@ -167,11 +167,6 @@ const rules = [
     if (updates.semtechEncoded) {
       // Call semtech to resolve the location
       console.log("New positioning data");
-      console.log('YALLAAAAAAAAAAAAAAAAAA')
-      console.log('YALLAAAAAAAAAAAAAAAAAA')
-      console.log('YALLAAAAAAAAAAAAAAAAAA')
-      console.log('YALLAAAAAAAAAAAAAAAAAA')
-      console.log('YALLAAAAAAAAAAAAAAAAAA')
       let solved = await solver.api.solvePosition(args, updates);
       if (solved && solved.result && solved.result.latitude && solved.result.longitude) {
         // Extra check: If we have a result here but no assistance data in the device, use this to generate an assistance position

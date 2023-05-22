@@ -2,11 +2,6 @@
 
 let iotwireless;
 const solvePosition = async (args, data) => {
-  console.log('*************************');
-  console.log('AWS SOLVER');
-  console.log('dataaaaa in aws solver', data);
-  // const resultData = {};
-  // if (!args.k) return;
   
   const isWifi = data.semtechEncoded && (data.semtechEncoded.msgtype === "wifi");
 
