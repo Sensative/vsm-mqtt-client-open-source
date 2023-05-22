@@ -81,7 +81,7 @@ const downlinkDeviceTimeDelta = (args, integration, client, deviceid, deltaS) =>
 
 const downlinkAlmanac = async (args, integration, client, solver, deviceid, maxSize) => {
     const f = async () => {
-        const almanac = await solver.api.loadAlmanac(args);
+        const almanac = await solver?.api?.loadAlmanac(args);
         if (!(almanac && almanac.result && almanac.result.almanac_image)) {
             console.log("Bad alamanac data");
             return;
@@ -209,6 +209,9 @@ const rules = [
     next.gnss.lastAlmanacDownloadAttempt = date;
 
     // Run this asynchronously rather than wait
+    if (!solver.api.downlinkAlmanac) {
+      return next;
+    }
     downlinkAlmanac(args, integration, client, solver, deviceid, next.encodedData.maxSize);
 
     return next;

@@ -28,9 +28,9 @@ const solvePosition = async (args, data) => {
     }
     console.log ('Sending request to AWS to resolve position');
     console.log('Params: ', params);
-    iotwireless.getPositionEstimate(params, function(err, response) {
+    return await iotwireless.getPositionEstimate(params, function(err, response) {
       if (err) {
-        console.log('Something went wrong when calling "getPositionEstimate" for the WiFi solver', err, err.stack);
+        console.log('Something went wrong when calling "getPositionEstimate" for the AWS WiFi solver', err, err.stack);
       } else {
           const buf = Buffer.from(response.GeoJsonPayload);
           const decodedString = buf.toString();
@@ -47,22 +47,20 @@ const solvePosition = async (args, data) => {
           }
         }
     });
-    // console.log('RETURNING RESULLLLLLT', resultData);
-    // return resultData;
   } else {
-    if (!body.msgtype === 'gnss' || !body.gnss.capture_time || !body.gnss.payload) {
+    if (!body.msgtype === 'gnss' || !body?.gnss_capture_time || !body.payload) {
       console.log('Error, data:', body);
       throw new Error("Not enough information to resolve Gnss position");
     } else {
       const params = {
         "Gnss": {
-          "CaptureTime": body.gnss.capture_time,
-          "Payload": body.gnss.payload,
+          "CaptureTime": body?.gnss_capture_time,
+          "Payload": body?.payload,
         }
       };
-      iotwireless.getPositionEstimate(params, function(err, response) {
+      return await iotwireless.getPositionEstimate(params, function(err, response) {
         if (err) {
-          console.log('Something went wrong when calling "getPositionEstimate" for the Gnss solver', err, err.stack);
+          console.log('Something went wrong when calling "getPositionEstimate" for the AWS Gnss solver', err, err.stack);
         } else {
           const buf = Buffer.from(response.GeoJsonPayload);
           const decodedString = buf.toString();
