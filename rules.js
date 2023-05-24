@@ -81,7 +81,7 @@ const downlinkDeviceTimeDelta = (args, integration, client, deviceid, deltaS) =>
 
 const downlinkAlmanac = async (args, integration, client, solver, deviceid, maxSize) => {
     const f = async () => {
-        const almanac = await solver?.api?.loadAlmanac(args);
+        const almanac = await solver.api.loadAlmanac(args);
         if (!(almanac && almanac.result && almanac.result.almanac_image)) {
             console.log("Bad alamanac data");
             return;
