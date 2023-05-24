@@ -24,6 +24,7 @@ SOFTWARE.
 This is a solver which has no implementation, e.g. you do not get positioning
 */
 
+
 module.exports.api = {
     initialize : async (args) => { return undefined; },
     solvePosition : async (args) => {return undefined; },
