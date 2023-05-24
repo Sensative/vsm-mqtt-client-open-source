@@ -139,16 +139,9 @@ publisher.api.initialize(args);
 let solver = undefined;
 try {
   solver = require("./solvers/" + (args.z ? args.z : "loracloud"));
-  if (args.z === 'aws') {
-    if (!(solver.api && solver.api.getVersionString && solver.api.checkArgumentsOrExit && solver.api.solvePosition && solver.api.initialize)) {
-      console.log("Solver " + args.z + " lacks a required function");
-      process.exit(1);
-    }
-  } else {
-    if (!(solver.api && solver.api.getVersionString && solver.api.checkArgumentsOrExit && solver.api.solvePosition && solver.api.loadAlmanac && solver.api.initialize)) {
-      console.log("Solver " + args.z + " lacks a required function");
-      process.exit(1);
-    }
+  if (!(solver.api && solver.api.getVersionString && solver.api.checkArgumentsOrExit && solver.api.solvePosition && solver.api.loadAlmanac && solver.api.initialize)) {
+    console.log("Solver " + args.z + " lacks a required function");
+    process.exit(1);
   }
 } catch (e) {
   console.log(e.message); 

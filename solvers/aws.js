@@ -36,7 +36,7 @@ const solvePosition = async (args, data) => {
             longitude: decodedResponse?.coordinates[0],
             verticalAccuracy: decodedResponse?.properties?.verticalAccuracy,
             verticalConfidenceLevel: decodedResponse?.properties?.verticalConfidenceLevel,
-            horizontalAccuracy: decodedResponse?.properties?.horizontalAccuracy,
+            accuracy: decodedResponse?.properties?.horizontalAccuracy,
             horizontalConfidenceLevel: decodedResponse?.properties?.horizontalConfidenceLevel,
             positionTimestamp: decodedResponse?.properties?.timestamp,
           }
@@ -67,7 +67,7 @@ const solvePosition = async (args, data) => {
             altitude: decodedResponse?.coordinates[2],
             verticalAccuracy: decodedResponse?.properties?.verticalAccuracy,
             verticalConfidenceLevel: decodedResponse?.properties?.verticalConfidenceLevel,
-            horizontalAccuracy: decodedResponse?.properties?.horizontalAccuracy,
+            accuracy: decodedResponse?.properties?.horizontalAccuracy,
             horizontalConfidenceLevel: decodedResponse?.properties?.horizontalConfidenceLevel,
             positionTimestamp: decodedResponse?.properties?.timestamp,
           }
@@ -79,6 +79,7 @@ const solvePosition = async (args, data) => {
 
 module.exports.api = {
     solvePosition,
+    loadAlmanac : async (args) => { return undefined; },
     checkArgumentsOrExit: (args)=>{if (args.z !== 'aws') throw new Error("Flag -z <aws> is required for AWS solver."); },
     getVersionString: ()=>"AWS Solver",
     initialize: (args) => {
