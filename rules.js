@@ -170,7 +170,7 @@ const rules = [
       if (solved && solved.result && solved.result.latitude && solved.result.longitude) {
         // Extra check: If we have a result here but no assistance data in the device, use this to generate an assistance position
         // and downlink it to the device
-        downlinkAssistancePositionIfMissing(args, integration, solver, client, deviceid, next, lat, lng);
+        downlinkAssistancePositionIfMissing(args, integration, client, solver, deviceid, next, lat, lng);
         return solved.result;
       } else {
         return null;
@@ -203,6 +203,9 @@ const rules = [
     next.gnss.lastAlmanacDownloadAttempt = date;
 
     // Run this asynchronously rather than wait
+    if (!solver.api.downlinkAlmanac) {
+      return next;
+    }
     downlinkAlmanac(args, integration, client, solver, deviceid, next.encodedData.maxSize);
 
     return next;
