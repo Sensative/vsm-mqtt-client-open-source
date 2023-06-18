@@ -1,5 +1,5 @@
 {
-  "name": "dots-mqtt-client",
+  "name": "vsm-mqtt-client-open-source",
   "version": "0.0.1",
   "description": "MQTT client for vsm sensors",
   "main": "index.js",
@@ -10,6 +10,6 @@
     "minimist": "^1.2.8",
     "mqtt": "^4.3.7",
     "node-fetch": "^3.3.1",
-    "vsm-translator": "^0.0.89"
+    "vsm-translator": "^0.1.2"
   }
 }
