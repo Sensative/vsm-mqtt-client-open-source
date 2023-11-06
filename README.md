@@ -4,4 +4,4 @@ Decoding and managing the Sensative new generation of products based on the Virt
 
 ## Documentation
 Please refer to the wiki for information
-https://gitlab.com/sensative/vsm-mqtt-client-open-source/-/wikis/home
+https://github.com/Sensative/vsm-mqtt-client-open-source/wiki
