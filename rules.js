@@ -30,6 +30,16 @@ const ASSISTANCE_INTERVAL_S =  60*30; // max 300km/h
 const MAX_ALMANAC_AGE_S =   60*60*24*30; // This is a monthly process
 const ALMANAC_DOWNLOAD_INTERVAL_S = 60*60*12; // No more frequent tries than this
 
+const byteToHex2 = (b) => {
+  const table = "0123456789abcdef";
+  return "" + table[(b>>4)&0xf] + table[b&0xf];
+}
+
+const int32ToHex8 = (n) => {
+  return "" + byteToHex2(n>>24) + byteToHex2(n>>16) + byteToHex2(n>>8) + byteToHex2(n);
+}
+
+
 const downlinkAssistancePositionIfMissing = async (args, integration, client, solver, deviceid, next, lat, lng) => {
   if (lat && lng && next && next.gnss) {
     let updateRequired = false;
@@ -71,11 +81,7 @@ const downlinkCrcRequest = (args, integration, client, deviceid) => {
 }
 
 const downlinkDeviceTimeDelta = (args, integration, client, deviceid, deltaS) => {
-  let buffer = "08";
-  let str = deltaS.toString(16);
-  while (str.length < 8)
-    str = "0"+str;
-  buffer += str;
+  let buffer = "08" + int32ToHex8(deltaS);
   integration.api.sendDownlink(client, args, deviceid, 21, Buffer.from(buffer, "hex"), false /* confirmed */ );
 }
 
