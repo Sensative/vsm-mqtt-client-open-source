@@ -22,7 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-const translator = require('vsm-translator');
+let translator;
+try {
+  translator = require('vsm-translator');
+} catch (e) {
+  console.log("Failed to load VSM translator. Did you do yarn install?");
+  process.exit(1);
+}
+
 const { initializeStore, fetchObjectFromStore, putObjectInStore, putErrorInStore, readDeviceList } = require('./store');
 const { mergeDeep, delay } = require('./util');
 const { processRules} = require('./rules');
@@ -46,7 +53,7 @@ const isVsmDevice = (deveui) => {
 }
 
 const printUsageAndExit = (hint) => {
-  console.log("Usage: node index.js [-v] (-f <device id file> | -a) -i <integration name> -k <loracloud api key> -o <publisher> -d <decorator> -O <publisher>");
+  console.log("Usage: node vsm-mqtt-client.js [-v] (-f <device id file> | -a) -i <integration name> -k <loracloud api key> -o <publisher> -d <decorator> -O <publisher>");
   console.log("      " + hint);
   process.exit(1);
 }
@@ -83,7 +90,8 @@ if (args.f) {
 //
 let integration = undefined;
 try {
-  integration = require("./integrations/" + args.i);
+  const location = process.env.VMC_INTEGRATIONS ? process.env.VMC_INTEGRATIONS : "./integrations";
+  integration = require(location + "/" + args.i);
   if (!(integration.api && integration.api.getVersionString && integration.api.checkArgumentsOrExit && integration.api.connectAndSubscribe)) {
     console.log("Integration " + args.i + " lacks a required function");
     process.exit(1);
@@ -101,7 +109,8 @@ integration.api.checkArgumentsOrExit(args);
 //
 let decorator;
 try {
-  decorator = require("./decorators/" + (args.d ? args.d : "default"));
+  const location = process.env.VMC_DECORATORS ? process.env.VMC_DECORATORS : "./decorators";
+  decorator = require(location + "/" + (args.d ? args.d : "default"));
   if (!(decorator.api && decorator.api.decorate && decorator.api.getVersionString)) {
     console.log("Decoration " + args.d + " lacks a required function");
     process.exit(1);
@@ -118,7 +127,8 @@ console.log("Decoration: " + decorator.api.getVersionString());
 
 let publisher = undefined;
 try {
-  publisher = require("./publishers/" + (args.O ? args.O : "console"));
+  const location = process.env.VMC_PUBLISHERS ? process.env.VMC_PUBLISHERS : "./publishers";
+  publisher = require(location + "/" + (args.O ? args.O : "console"));
   if (!(publisher.api && publisher.api.getVersionString && publisher.api.checkArgumentsOrExit && publisher.api.publish)) {
     console.log("Publisher " + args.O + " lacks a required function");
     process.exit(1);
@@ -138,7 +148,8 @@ publisher.api.initialize(args);
 
 let solver = undefined;
 try {
-  solver = require("./solvers/" + (args.z ? args.z : "loracloud"));
+  const location = process.env.VMC_SOLVERS ? process.env.VMC_SOLVERS : "./solvers";
+  solver = require(location + "/" + (args.z ? args.z : "loracloud"));
   if (!(solver.api && solver.api.getVersionString && solver.api.checkArgumentsOrExit && solver.api.solvePosition && solver.api.loadAlmanac && solver.api.initialize)) {
     console.log("Solver " + args.z + " lacks a required function");
     process.exit(1);
