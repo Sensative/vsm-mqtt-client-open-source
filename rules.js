@@ -23,7 +23,14 @@ SOFTWARE.
 */
 
 const { mergeDeep, delay } = require('./util');
-const translatorVersion = require('./node_modules/vsm-translator-open-source/package.json').version;
+let translatorVersion = "";
+try {
+  // Running at top level
+  translatorVersion = require('./node_modules/vsm-translator-open-source/package.json').version;
+} catch (e) {
+  // Running as npm package
+  translatorVersion = require('../vsm-translator-open-source/package.json').version;
+}
 console.log("Translator Version: " + translatorVersion);
 
 const ASSISTANCE_INTERVAL_S =  60*30; // max 300km/h
