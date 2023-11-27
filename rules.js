@@ -23,7 +23,7 @@ SOFTWARE.
 */
 
 const { mergeDeep, delay } = require('./util');
-const translatorVersion = require('./node_modules/vsm-translator/package.json').version;
+const translatorVersion = require('./node_modules/vsm-translator-open-source/package.json').version;
 console.log("Translator Version: " + translatorVersion);
 
 const ASSISTANCE_INTERVAL_S =  60*30; // max 300km/h

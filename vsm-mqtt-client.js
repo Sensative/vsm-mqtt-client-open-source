@@ -24,7 +24,7 @@ SOFTWARE.
 
 let translator;
 try {
-  translator = require('vsm-translator');
+  translator = require('vsm-translator-open-source');
 } catch (e) {
   console.log("Failed to load VSM translator. Did you do yarn install?");
   process.exit(1);
