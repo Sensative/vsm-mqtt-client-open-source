@@ -78,3 +78,5 @@ module.exports.readDeviceList = (devicefile) => {
     }
     return devices;
 }
+
+module.exports.getStoreName = () => { return "Local file system object storage" };

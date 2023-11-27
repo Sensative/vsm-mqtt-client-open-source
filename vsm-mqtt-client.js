@@ -30,7 +30,10 @@ try {
   process.exit(1);
 }
 
-const { initializeStore, fetchObjectFromStore, putObjectInStore, putErrorInStore, readDeviceList } = require('./store');
+const store = process.env.VMC_STORE ? process.env.VMC_STORE : "./store";
+const { initializeStore, fetchObjectFromStore, putObjectInStore, putErrorInStore, readDeviceList, getStoreName } = require(store);
+console.log("Store: " + getStoreName());
+
 const { mergeDeep, delay } = require('./util');
 const { processRules} = require('./rules');
 
