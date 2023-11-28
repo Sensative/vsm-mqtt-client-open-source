@@ -214,12 +214,10 @@ const run = async () => {
       const returned = translator.translate(iotnode);
       result = returned.result;
       let timeseries = returned.timeseries;
-      // For now since there is no underlying timeseries database, ignore the timeseries part of the result, 
-      // e.g. data older than the most recent data.
       args.v && timeseries && !seriesProcessor && console.log("Ignoring historical timeseries data:", JSON.stringify(timeseries));
-      if (seriesProcessor && seriesProcessor.onTimeSeries) {
-        if (args.v) console.log("Invoking series processor " + seriesProcessor.getName + " with " + timeseries.length() + " measurements.");
-        seriesProcessor.onTimeSeries(deviceid, timeseries);
+      if (Array.isArray(timeseries) && seriesProcessor && seriesProcessor.onTimeSeries) {
+        if (args.v) console.log("Invoking series processor " + seriesProcessor.getName() + " with " + timeseries.length + " measurements.");
+        seriesProcessor.onTimeSeries(deviceid, timeseries, iotnode);
       }
     } catch (e) {
       console.log("Failed translation: ", e.message);
