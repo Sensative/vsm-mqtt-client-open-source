@@ -167,6 +167,11 @@ const run = async () => {
   solver.api.checkArgumentsOrExit(args);
   solver.api.initialize(args);
 
+  // TIME SERIES PROCESSOR
+  const seriesProcessor = process.env.VMC_PROCESSOR ? require(process.env.VMC_PROCESSOR) : undefined;
+  if (seriesProcessor && seriesProcessor.onTimeSeries && seriesProcessor.getName) 
+    console.log('Series Processor: ', seriesProcessor.getName());
+
   // Function to handle uplinks for a device id on a port with binary data in buffer
   const onUplinkDevicePortBufferDateLatLng = async (client, deviceid, port, buffer, date, lat, lng, maxSize) => {
     if (!(typeof(deviceid) == "string" && isFinite(port) && Buffer.isBuffer(buffer))) {
@@ -211,7 +216,11 @@ const run = async () => {
       let timeseries = returned.timeseries;
       // For now since there is no underlying timeseries database, ignore the timeseries part of the result, 
       // e.g. data older than the most recent data.
-      args.v && timeseries && console.log("Ignoring historical timeseries data:", JSON.stringify(timeseries));
+      args.v && timeseries && !seriesProcessor && console.log("Ignoring historical timeseries data:", JSON.stringify(timeseries));
+      if (seriesProcessor && seriesProcessor.onTimeSeries) {
+        if (args.v) console.log("Invoking series processor " + seriesProcessor.getName + " with " + timeseries.length() + " measurements.");
+        seriesProcessor.onTimeSeries(deviceid, timeseries);
+      }
     } catch (e) {
       console.log("Failed translation: ", e.message);
       putErrorInStore(deviceid, e);
