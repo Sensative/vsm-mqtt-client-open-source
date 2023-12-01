@@ -14,8 +14,8 @@ module.exports.api = {
     initialize: (args) => {
     },
     publish: async (args, deviceid, obj) => {
-        console.log("HTTPS Publish to " + args.s, deviceid, obj);
         const url = args.S;
+        console.log("HTTPS Publish to " + url, deviceid, JSON.stringify(obj));
         try {
             await fetch(url, { 
                 method:"POST", 

@@ -238,7 +238,7 @@ const run = async () => {
     await putObjectInStore(deviceid, next);
 
     // Publish the data
-    publisher.api.publish(args, deviceid, decorator.api.decorate(next));
+    publisher.api.publish(args, deviceid, decorator.api.decorate(next, deviceid));
   }
 
   const runClient = async () => {
