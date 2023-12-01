@@ -1,7 +1,7 @@
 // Decoration which only provides the current values + the position 
 
 module.exports.api = {
-    decorate: (obj) => {
+    decorate: (obj, deveui) => {
         let result = {};
         if (obj.output)
             result = JSON.parse(JSON.stringify(obj.output))

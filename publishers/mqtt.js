@@ -1,4 +1,4 @@
-// Publisher which only displays output on standardout
+// Publisher which publishes on mqtt
 
 const mqtt = require('mqtt')
 

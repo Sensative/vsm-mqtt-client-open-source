@@ -1,6 +1,6 @@
 
 module.exports.api = {
-    decorate: (obj) => {
+    decorate: (obj, deveui) => {
         return obj;
     },
     getVersionString: () => {
