@@ -119,6 +119,18 @@ Publishers have the role of making the decorated translated data available to do
 ## Console Publisher
 The console publisher (default) is selected with the -O console command line option. It will print a formatted version of the decorated object to the command line.
 
+## HTTP(s) publisher
+The HTTPS publisher is selected with the -O https command line option.
+
+### Extra command line arguments
+The HTTPS publisher will require an additional command line argument
+```
+-S <URL> Select the URL for the target. The object will be passed as application/json and in the format given by the decorator. 
+```
+Note: It would be simple to add an option to replace a placeholder in the url with the deveui of the device.
+
+### 
+
 ## MQTT publisher
 The mqtt publisher (mqtt) is selected with the -O mqtt command line option.
 
