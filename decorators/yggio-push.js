@@ -5,7 +5,7 @@ module.exports.api = {
         return { payload: { iotnode: { _id:deveui.toLowerCase(), ...obj } } };
     },
     getVersionString: () => {
-        return "Yggio-like push transformation (add payload and _id fields)";
+        return "Yggio-like push transformation (add payload.iotnode._id field)";
     }
 }
 
