@@ -64,6 +64,7 @@ General arguments:
 * -d <decorator> Select decorator (see decorators folder for list of available decorators). If omitted the full translated object with all bookkeeping data will be used.
 * -O <publisher> Select publisher (see publishers folder for list of available publishers). If omitted the publishing will be only to the console.
 * -z <solver> Select a GNSS almanac and solution provider. Defaults to loracloud.
+* -N Do not invoke solver, but still use it for GNSS almanac updates (assume solving is done elsewhere in chain)
 
 # Integrations
 Where is raw device data fetched and where do we send downlinks?

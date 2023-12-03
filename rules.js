@@ -176,7 +176,7 @@ const rules = [
 
   // Solve positions and add the solution to the data
   async (args, integration, client, solver, deviceid, next, updates, date, lat, lng) => {
-    if (updates.semtechEncoded) {
+    if (updates.semtechEncoded && !args.hasOwnProperty("N")) {
       // Call semtech to resolve the location
       console.log("New positioning data");
       let solved = await solver.api.solvePosition(args, updates);
