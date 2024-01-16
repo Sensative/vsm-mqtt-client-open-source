@@ -1,4 +1,4 @@
-# VSM MQTT Client
+# VSM MQTT Client "Hugin"
 
 Decoding and managing the Sensative new generation of products based on the Virtual Sensoring Machine technology.
 
