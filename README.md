@@ -68,6 +68,10 @@ General arguments:
 * -z <solver> Select a GNSS almanac and solution provider. Defaults to loracloud.
 * -N Do not invoke solver, but still use it for GNSS almanac updates (assume solving is done elsewhere in chain)
 
+## Environment variables
+
+As a separate extension mechanism, environment variables can also be used to specify the various components, such as store, decorator, etc (see folder structure below). This is in order to work better as a npm import with customizations instead of through the forking mechanism.
+
 # Integrations
 Where is raw device data fetched and where do we send downlinks?
 
@@ -151,8 +155,12 @@ Run select devices with data from helium, publish only latest values to mqtt nod
 
 Run with data from helium, all devices, print full data to console node vsm-mqtt-client.js -w -i helium -s mqtt://test.mosquitto.org:1883 -k AQEAf8i6... -u test -p pass
 
+
+# Extensibility
+To add your own implementations there is a series of different environment variables that can be set to override the defaults. See the implementation in vsm-mqtt-client.js for the full list. Use this as an alternative to forking this repository and isolating your changes and additions.
+
 # Code Structure
-This code is designed to listen to a lorawan network server publishing the raw uplinks from a VSM device. It will translate it correctly and can additionally control the device with necessary downlinks to keep it up-to-date with regards to assistance positions. Once new data is available it will be re-published using a publisher.
+This code is designed to listen to a lorawan network server publishing the raw uplinks from a VSM device. It will translate it correctly and can additionally control the device with necessary downlinks to keep it up-to-date with regards to assistance positions. Once new data is available it will be re-published using a publisher and finally the data will be stored using the storage mechanism.
 
 ## vsm-mqtt-client.js
 The main file which ties together the below components and contains the main logic.
