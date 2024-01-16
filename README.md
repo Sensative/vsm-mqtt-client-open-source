@@ -89,7 +89,7 @@ node vsm-mqtt-client.js -v -f chirpstack-devices.list  -i chirpstack3 -a appname
 ```
 
 ## Running with Helium
-A general note: At the time of writing this I do not get device time support from Helium. This means that the device needs to get device time from another source at least once before several of the GNSS assisted functions work. One way to do this is through NFC, another is through roaming to other networks that have device time.
+A general note: At the time of writing this I do not get device time support from Helium. This is solved at application level by this service, but gives lower time precision than LoRaWan native device time.
 
 Extra arguments
 * - s mqtts://<mqtt broker URL> Select the URL of the broker
