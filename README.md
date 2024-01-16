@@ -51,6 +51,8 @@ Locate the constants.json file and fill out the required fields, e.g:
     }
 }
 
+Nota bene, the AWS Cloud Solver does not support GNSS almanac updates at the time of writing this.
+
 # Running
 
 This is expecting node, tried on node version 18, 19 and 20.
