@@ -29,7 +29,16 @@ module.exports.api = {
     connectAndSubscribe: async (args, devices, onUplinkDevicePortBufferDateLatLng) => {
         args.v && console.log("Trying to connect to " + args.s + " with application " + args.a);
         try {
-            const client  = mqtt.connect(args.s);
+            let client;
+            if (process.env.CS3_USERNAME || process.env.CS3_PASSWORD || process.env.CS3_CLIENTID) {
+                client  = mqtt.connect(args.s, {
+                        clientId: process.env.CS3_CLIENTID ? process.env.CS3_CLIENTID : "vsm-mqtt-client",
+                        username: process.env.CS3_USERNAME ? process.env.CS3_USERNAME : "",
+                        password: process.env.CS3_PASSWORD ? process.env.CS3_PASSWORD : "",
+                    });
+            } else {
+                client  = mqtt.connect(args.s);
+            }
 
             client.on('connect', () => {
                 args.v && console.log("Connected to chirpstack server");
