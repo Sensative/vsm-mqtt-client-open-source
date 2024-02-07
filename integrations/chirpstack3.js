@@ -31,6 +31,7 @@ module.exports.api = {
         try {
             let client;
             if (process.env.CS3_USERNAME || process.env.CS3_PASSWORD || process.env.CS3_CLIENTID) {
+                args.v && console.log("  Note: Using user name " + process.env.CS3_USERNAME);
                 client  = mqtt.connect(args.s, {
                         clientId: process.env.CS3_CLIENTID ? process.env.CS3_CLIENTID : "vsm-mqtt-client",
                         username: process.env.CS3_USERNAME ? process.env.CS3_USERNAME : "",
@@ -39,6 +40,11 @@ module.exports.api = {
             } else {
                 client  = mqtt.connect(args.s);
             }
+
+            client.on('error', (e) => {
+                console.log("MQTT Chirpstack 3 Connection Error", e);
+                process.exit(1);
+            });
 
             client.on('connect', () => {
                 args.v && console.log("Connected to chirpstack server");
