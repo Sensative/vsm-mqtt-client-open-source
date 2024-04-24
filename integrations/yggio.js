@@ -1,6 +1,6 @@
-const mqtt = require('mqtt');
+const mqtt = require("mqtt");
 const { MongoClient } = require("mongodb");
-const { isDate } = require('util/types');
+const { isDate } = require("util/types");
 
 const printUsageAndExit = (info) => {
     console.log(info);
@@ -73,7 +73,7 @@ module.exports.api = {
                 // message is Buffer
                 args.v && console.log(topic, message.toString());
 
-                const obj = JSON.parse(message.toString('utf-8'));
+                const obj = JSON.parse(message.toString("utf-8"));
                 if (!obj.data)
                     return;
                 const data = Buffer.from(obj.data, "base64");
