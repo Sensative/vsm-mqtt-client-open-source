@@ -42,18 +42,16 @@ const isValidDate = (d) => {
 }
 
 const isVsmDevice = (deveui) => {
-  if (!deveui.toUpperCase().startsWith("70B3D52C")) {
+  if (!deveui.toUpperCase().startsWith("70B3D52C"))
     return false;
-  }
-  if (!deveui.length == 16) {
+  if (!deveui.length == 16)
     return false;
-  }
   
   // TODO: Filter out deveuis in correct range
   const id = Number.parseInt(deveui.substr(8, 8), 16);
-  if (id >= 0x0001D4C5 && id < 0x0001E000) {
+  if (id >= 0x0001D4C5 && id < 0x0001E000)
     return true;
-  }
+
   return false;
 }
 

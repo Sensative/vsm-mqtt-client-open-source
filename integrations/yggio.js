@@ -30,8 +30,9 @@ module.exports.api = {
             printUsageAndExit("Yggio: YGGIO_MONGO_URI must be set");
     },
     connectAndSubscribe: async (args, devices, onUplinkDevicePortBufferDateLatLng) => {
-        console.log("Attempt authentication to Yggio MongoDB");
+        console.log("Connecting to Yggio MongoDB");
         const client = new MongoClient(process.env.YGGIO_MONGO_URI, { useUnifiedTopology: true });
+        console.log("Connected to Yggio MongoDB");
 
         const database = client.db("fafnir");
         const entities = database.collection("entities");
@@ -45,7 +46,7 @@ module.exports.api = {
         try {
             const client  = mqtt.connect(args.s);
 
-            client.on('connect', () => {
+            client.on("connect", () => {
                 args.v && console.log("Connected to chirpstack server");
 
                 if (Array.isArray(devices) && devices.length > 0) {
@@ -69,7 +70,7 @@ module.exports.api = {
                     });
                 }
             });
-            client.on('message', async (topic, message) => {
+            client.on("message", async (topic, message) => {
                 // message is Buffer
                 args.v && console.log(topic, message.toString());
 
@@ -112,7 +113,7 @@ module.exports.api = {
             devEui: devEUI,
             confirmed,
             fPort: port,
-            payload: data.toString('base64'),
+            payload: data.toString("base64"),
         };
         client.publish(topic, JSON.stringify(obj));
         args.v && console.log("Publish downlink on port " + port + " data: " + data.toString("hex"));
