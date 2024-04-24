@@ -30,17 +30,22 @@ module.exports.api = {
             printUsageAndExit("Yggio: YGGIO_MONGO_URI must be set");
     },
     connectAndSubscribe: async (args, devices, onUplinkDevicePortBufferDateLatLng) => {
-        console.log("Connecting to Yggio MongoDB");
-        const client = new MongoClient(process.env.YGGIO_MONGO_URI, { useUnifiedTopology: true });
-        console.log("Connected to Yggio MongoDB");
+        try {
+            args.v && console.log("Connecting to Yggio MongoDB");
+            const client = new MongoClient(process.env.YGGIO_MONGO_URI, { useUnifiedTopology: true });
+            args.v && console.log("Connected to Yggio MongoDB");
 
-        const database = client.db("fafnir");
-        const entities = database.collection("entities");
-        const devicesResult = await entities
-          .find({"attrs.deviceModelName.value": "sensative-vsm-lora"})
-          .toArray();
-        devices = devicesResult.map(device => device.attrs.devEui.value);
-        console.log("Device count: " + devices.length);
+            const database = client.db("fafnir");
+            const entities = database.collection("entities");
+            const devicesResult = await entities
+              .find({"attrs.deviceModelName.value": "sensative-vsm-lora"})
+              .toArray();
+            devices = devicesResult.map(device => device.attrs.devEui.value);
+            console.log("Device count: " + devices.length);
+        } catch (e) {
+            console.log("Yggio: Got exception: " + e.message);
+            throw e;
+        }
 
         args.v && console.log("Trying to connect to " + args.s + " with application " + args.a);
         try {
