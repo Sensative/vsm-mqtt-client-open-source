@@ -111,6 +111,16 @@ Downlink topic: helium/vsm/tx/{{device_eui}}
 ```
 Point the console to the same mqtt broker.
 
+## Running with Yggio
+Needs Chirpstack 3.x and Yggio MongoDB running.
+
+Requires the following environment variables to be set:
+* YGGIO_MONGO_URL - MongoDB connection URL
+
+Extra Arguments
+* -a <n> Provide the application id (an integer number) in which the device ids are valid
+* -s mqtts://<chirpstack server url> Select the URL of the chirpstack server in use
+
 ### Notes
 While experimenting with this it was clear that the helium console did not work with HiveMQ cloud,
 
