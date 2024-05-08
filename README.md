@@ -114,8 +114,8 @@ Point the console to the same mqtt broker.
 ## Running with Yggio
 Needs Chirpstack 3.x and Yggio MongoDB running.
 
-Requires the following environment variables to be set:
-* YGGIO_MONGO_URL - MongoDB connection URL
+Requires the following environment variables to be set in constants.json:
+* MONGODB.URI - MongoDB connection URI
 
 Extra Arguments
 * -a <n> Provide the application id (an integer number) in which the device ids are valid

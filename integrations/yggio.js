@@ -1,5 +1,4 @@
 const mqtt = require("mqtt");
-const { MongoClient } = require("mongodb");
 const { isDate } = require("util/types");
 
 const printUsageAndExit = (info) => {
@@ -22,17 +21,20 @@ const getMaxSize = (obj) => {
 module.exports.api = {
     getVersionString: () => { return "Yggio Integration"; },
     checkArgumentsOrExit: (args) => { 
+        const CONSTANTS = require('../constants');
         if (!args.a)
             printUsageAndExit("Chirpstack: -a <application-id> is required");
         if (!args.s)
             printUsageAndExit("Chirpstack: -s <server url> is required");
-        if (!process.env.YGGIO_MONGO_URI)
-            printUsageAndExit("Yggio: YGGIO_MONGO_URI must be set");
+        if (!CONSTANTS.MONGODB.URI)
+            printUsageAndExit("Yggio: MONGODB.URI must be set in constants.json");
     },
     connectAndSubscribe: async (args, devices, onUplinkDevicePortBufferDateLatLng) => {
+        const { MongoClient } = require("mongodb");
+        const CONSTANTS = require('../constants');
         try {
             args.v && console.log("Connecting to Yggio MongoDB");
-            const client = new MongoClient(process.env.YGGIO_MONGO_URI, { useUnifiedTopology: true });
+            const client = new MongoClient(CONSTANTS.MONGODB.URI, { useUnifiedTopology: true });
             args.v && console.log("Connected to Yggio MongoDB");
 
             const database = client.db("fafnir");
