@@ -42,7 +42,7 @@ const solvePosition = async (args, data) => {
         delete body.timestamp;
         if ((!body.wifiAccessPoints) || body.wifiAccessPoints.length < 2) {
             console.log(data);
-            throw new Error("Not enough access points to resolve wifi position")
+            return {errors:["Too few access points to solve position ("+ (body.wifiAccessPoints ? body.wifiAccessPoints.length:"none" )+")"]};
         }
 
         // The below is a workaround since this data is likely not available in good enough precision, in particular with mobile gateways
