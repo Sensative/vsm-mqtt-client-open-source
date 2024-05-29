@@ -49,9 +49,9 @@ const isVsmDevice = (deveui) => {
   
   // TODO: Filter out deveuis in correct range
   const id = Number.parseInt(deveui.substr(8, 8), 16);
-  if (id >= 0x0001D4C5 && id < 0x0001E000) {
+  if (id >= 0x0001D4C5 && id < 0x0001E000)
     return true;
-  }
+
   return false;
 }
 
@@ -183,8 +183,9 @@ const run = async () => {
     if (!isValidDate(date))
       date = new Date();
 
-    // If wildcarded, check that we have the correct series of deveuis
-    if (args.w && !isVsmDevice(deviceid)) {
+  // If wildcarded, check that we have the correct series of deveuis,
+  // unless yggio integration, which does its own check
+    if (args.w && (!isVsmDevice(deviceid) && args.i !== 'yggio')) {
       args.v && console.log("Ignoring unrecognized device " + deviceid);
       return;
     }
