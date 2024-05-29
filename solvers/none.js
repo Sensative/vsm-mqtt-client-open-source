@@ -24,11 +24,17 @@ SOFTWARE.
 This is a solver which has no implementation, e.g. you do not get positioning
 */
 
+const loraCloudLoadAlmanac = require('./loracloud').loadAlmanac;
 
 module.exports.api = {
     initialize : async (args) => { return undefined; },
     solvePosition : async (args) => {return undefined; },
-    loadAlmanac : async (args) => { return undefined; },
-    checkArgumentsOrExit: (args)=>{if (!args.k) throw new Error("-k <API key> is required for LoraCloud solver"); },
+    loadAlmanac : async (args) => { 
+        if (!args.k)
+            return undefined; 
+        // The almanac loading procedure may be valid also for non-loracloud solvers
+        return loraCloudLoadAlmanac.loadAlmanac(args);
+    },
+    checkArgumentsOrExit: (args)=>{if (args.k) console.log("No position solver, using loracloud key (-k) for almanac downloads") },
     getVersionString: ()=>"No Position Solver",
 };
