@@ -51,7 +51,7 @@ module.exports.api = {
 
         args.v && console.log("Trying to connect to " + args.s + " with application " + args.a);
         try {
-            const client  = mqtt.connect(args.s);
+            const client  = mqtt.connect(args.s, args.u, args.p);
 
             client.on("connect", () => {
                 args.v && console.log("Connected to chirpstack server");
