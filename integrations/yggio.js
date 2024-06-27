@@ -40,7 +40,7 @@ module.exports.api = {
             const database = client.db("fafnir");
             const entities = database.collection("entities");
             const devicesResult = await entities
-              .find({"attrs.deviceModelName.value": "sensative-vsm-lora"})
+              .find({"attrs.deviceModelName.value": "sensative-vsm-lora", "attrs.devEui.value": {$exists: true}})
               .toArray();
             devices = devicesResult.map(device => device.attrs.devEui.value);
             console.log("Device count: " + devices.length);
