@@ -30,7 +30,7 @@ module.exports.api = {
             printUsageAndExit("Yggio: MONGODB.URI must be set in constants.json");
     },
     connectAndSubscribe: async (args, devices, onUplinkDevicePortBufferDateLatLng) => {
-      const TIMEOUT = 600000; // 10 minutes
+        const TIMEOUT = 600000; // 10 minutes
         let interval;
         const runYggioIntegration = async () => {
             const { MongoClient } = require("mongodb");
