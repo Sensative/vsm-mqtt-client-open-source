@@ -55,7 +55,7 @@ module.exports.api = {
 
             args.v && console.log("Trying to connect to " + args.s + " with application " + args.a);
             try {
-              const client  = mqtt.connect(args.s, args.u, args.p);
+              const client  = mqtt.connect(args.s, {username: args.u, password: args.p});
 
               client.on("connect", () => {
                 args.v && console.log("Connected to chirpstack server");
@@ -116,6 +116,7 @@ module.exports.api = {
               throw e;
             }
         };
+        runYggioIntegration();
         interval = setInterval(runYggioIntegration, TIMEOUT);
     },
     sendDownlink: async (client, args, deviceId, port, data, confirmed) => {
