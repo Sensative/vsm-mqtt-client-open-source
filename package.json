@@ -1,6 +1,6 @@
 {
   "name": "vsm-mqtt-client-open-source",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "description": "MQTT client for vsm sensors",
   "main": "vsm-mqtt-client.js",
   "author": "Lars Mats",
@@ -11,6 +11,6 @@
     "mongodb": "6.3.0",
     "mqtt": "4.3.7",
     "node-fetch": "3.3.1",
-    "vsm-translator-open-source": ">=0.2.72"
+    "vsm-translator-open-source": ">=0.2.73"
   }
 }
