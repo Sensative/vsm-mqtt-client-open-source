@@ -180,7 +180,7 @@ const run = async () => {
       throw new Error("Bad parameter");
     }
 
-    if (!isValidDate(date))
+    if ((!isValidDate(date)) || process.env.VMC_DISTRUST_LNS_TIME)
       date = new Date();
 
   // If wildcarded, check that we have the correct series of deveuis,
