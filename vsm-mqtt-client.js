@@ -235,7 +235,7 @@ const run = async () => {
     next = await processRules(args, integration, client, solver, deviceid, next, result, date, lat, lng);
 
     // Store the next version of the object representation
-    await putObjectInStore(deviceid, next);
+    await putObjectInStore(deviceid, next, /* diff*/ result);
 
     // Publish the data
     publisher.api.publish(args, deviceid, decorator.api.decorate(next, deviceid));
