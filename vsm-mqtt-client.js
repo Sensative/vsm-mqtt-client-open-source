@@ -83,8 +83,7 @@ const run = async () => {
   if (args.f) {
     devices = await readDeviceList(args.f);
     if (devices.length == 0) {
-      console.log("No devices in device file");
-      printUsageAndExit();
+      console.log("Note: No devices in device file, continuing anyway");
     }
   } else if (!args.w)
     printUsageAndExit();
