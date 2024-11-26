@@ -30,7 +30,7 @@ SOFTWARE.
 const fs = require('fs');
 
 // If the store is not initialized and requires initialization, do that here
-module.exports.initializeStore = () => {
+module.exports.initializeStore = async () => {
     if (!fs.existsSync('storage'))
         fs.mkdirSync('storage');
 }

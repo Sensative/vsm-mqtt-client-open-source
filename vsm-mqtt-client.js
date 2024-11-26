@@ -74,7 +74,7 @@ const run = async () => {
   args.v && console.log("Selected decorator: " + (args.d ? args.d : "default"));
 
   // Initialize and or connect to the storage
-  initializeStore();
+  await initializeStore();
 
   //
   // Create the list of devices (device ID dependent on each integration), as an array of files
