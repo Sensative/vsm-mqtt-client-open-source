@@ -1,11 +1,14 @@
 {
     "AWS": {
-        "VERSION": "<SDK VERSION (YYYY-MM-DD)>", 
+        "VERSION": "<SDK VERSION (YYYY-MM-DD)>",
         "ACCESS_KEY_ID": "<YOUR ACCESS KEY ID>",
         "SECRET_ACCESS_KEY": "<YOUR SECRET ACCESS KEY>",
         "REGION": "<YOUR REGION, EU NORTH IS NOT SUPPORTED>"
     },
     "MONGODB": {
-        "URI": ""
+        "URI": "mongodb://172.18.0.16:27017"
+    },
+    "MQTT": {
+        "CLIENT_ID": "vsm_client_f6fbda4d"
     }
 }
