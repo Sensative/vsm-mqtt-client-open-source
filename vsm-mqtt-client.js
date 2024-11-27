@@ -217,7 +217,7 @@ const run = async () => {
       args.v && timeseries && !seriesProcessor && console.log("Ignoring historical timeseries data:", JSON.stringify(timeseries));
       if (Array.isArray(timeseries) && seriesProcessor && seriesProcessor.onTimeSeries) {
         if (args.v) console.log("Invoking series processor " + seriesProcessor.getName() + " with " + timeseries.length + " measurements.");
-        seriesProcessor.onTimeSeries(deviceid, timeseries, iotnode);
+        await seriesProcessor.onTimeSeries(deviceid, timeseries, iotnode);
       }
     } catch (e) {
       console.log("Failed translation: ", e.message);
