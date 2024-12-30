@@ -6,7 +6,8 @@ Decoding and managing the Sensative new generation of products based on the Virt
 
 * Software Service which will Translate Sensative AB Puck, Square, and Lifefinder data. 
 * Manage GNSS almanac and assistance position updates for the devices over LoRaWan.
-* Solve positions (provided that you provide the necessary loracloud or AWS key information, reqiuires a paid account with respective supplier, e.g. https://www.loracloud.com/documentation/modem_services.
+* Solve positions (provided that you provide the necessary loracloud or AWS key information, reqiuires a paid account with respective supplier, e.g. https://www.loracloud.com/documentation/modem_services or https://docs.aws.amazon.com/location/ .
+* Sensative can also provide this service through your Yggio account.
 * Manage device time in LoraWan networks which lack this feature
 * Format the device data
 * Forward the device data to the wanted destination.
