@@ -1,6 +1,6 @@
 {
   "name": "vsm-mqtt-client-open-source",
-  "version": "0.0.36",
+  "version": "0.0.37",
   "description": "MQTT client for vsm sensors",
   "main": "vsm-mqtt-client.js",
   "author": "Lars Mats",
