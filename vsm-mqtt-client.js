@@ -61,9 +61,63 @@ const printUsageAndExit = (hint) => {
   process.exit(1);
 }
 
+// Exported for clients to use (intended for downlinks)
+exports.getDevices = async (args) => {
+  if (args.f) {
+    let devices = await readDeviceList(args.f);
+    if (devices.length == 0) {
+      console.log("Note: No devices in device file, continuing anyway");
+    }
+    return devices;
+  } else if (!args.w)
+    printUsageAndExit();
+}
+
+// Exported for clients to use (intended for downlinks)
+exports.getIntegration = async (args) => {
+  let integration;
+  try {
+    const location = process.env.VMC_INTEGRATIONS ? process.env.VMC_INTEGRATIONS : "./integrations";
+    integration = require(location + "/" + args.i);
+    if (!(integration.api && integration.api.getVersionString && integration.api.checkArgumentsOrExit && integration.api.connectAndSubscribe)) {
+      console.log("Integration " + args.i + " lacks a required function");
+      process.exit(1);
+    }
+  } catch (e) {
+    console.log(e.message);
+    printUsageAndExit();
+  }
+  return integration;
+}
+
+// Exported for clients to use (intended for downlinks)
+exports.getArgs = () => {
+  return require('minimist')(process.argv.slice(2));
+}
+
+// Assigned below in runClient
+let mqtt_client = undefined;
+
+// Exported for clients to use (intended for downlinks)
+exports.getMqttClient = () => {
+  return mqtt_client;
+}
+
+exports.sendDownlink = async (deveui, port, buffer) => {
+  const integration = this.getIntegration();
+  // Either below means that initialization did not succeed. Throw!
+  if (!integration)
+    throw { message: "sendDownlink: Integration not initialized."};
+
+  if (!this.getMqttClient())
+    throw { message: "sendDownlink: MQTT not initialized."};
+
+  await integration.api.sendDownlink(this.getMqttClient(), this.getArgs(), deveui, port, Buffer.from(buffer, "hex"), false /* confirmed */ );
+}
+
 const run = async () => {
   // Command line options handler (simple one)
-  const args = require('minimist')(process.argv.slice(2));
+  const args = this.getArgs();
   if (!args.i)
     printUsageAndExit("-i <Integration name> is required");
   if (!(args.f || args.w))
@@ -79,30 +133,12 @@ const run = async () => {
   //
   // Create the list of devices (device ID dependent on each integration), as an array of files
   //
-  let devices;
-  if (args.f) {
-    devices = await readDeviceList(args.f);
-    if (devices.length == 0) {
-      console.log("Note: No devices in device file, continuing anyway");
-    }
-  } else if (!args.w)
-    printUsageAndExit();
+  let devices = await this.getDevices(args);
 
   //
   // INTEGRATION
   //
-  let integration = undefined;
-  try {
-    const location = process.env.VMC_INTEGRATIONS ? process.env.VMC_INTEGRATIONS : "./integrations";
-    integration = require(location + "/" + args.i);
-    if (!(integration.api && integration.api.getVersionString && integration.api.checkArgumentsOrExit && integration.api.connectAndSubscribe)) {
-      console.log("Integration " + args.i + " lacks a required function");
-      process.exit(1);
-    }
-  } catch (e) {
-    console.log(e.message);
-    printUsageAndExit();
-  }
+  let integration = await this.getIntegration(args);
   // Allow the integration to check its arguments (e.g. server, credentials, etc)
   console.log("Integration: " + integration.api.getVersionString());
   integration.api.checkArgumentsOrExit(args);
@@ -243,9 +279,8 @@ const run = async () => {
 
   const runClient = async () => {
     // Let the integration create connection and add required subscriptions
-    let client = undefined;
     try {
-      client = await integration.api.connectAndSubscribe(args, devices, onUplinkDevicePortBufferDateLatLng);
+      mqtt_client = await integration.api.connectAndSubscribe(args, devices, onUplinkDevicePortBufferDateLatLng);
     } catch (e) {
       console.log("Failed to connect and subscribe: " + e.message);
       process.exit(1);
