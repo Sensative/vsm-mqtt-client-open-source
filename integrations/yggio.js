@@ -46,9 +46,9 @@ module.exports.api = {
                 const database = client.db("fafnir");
                 const entities = database.collection("entities");
                 const devicesResult = await entities
-                    .find({"attrs.deviceModelName.value": "sensative-vsm-lora", "attrs.devEui.value": {$exists: true}})
+                    .find({"deviceModelName": "sensative-vsm-lora", "devEui": {$exists: true}})
                     .toArray();
-                devices = devicesResult.map(device => device.attrs.devEui.value);
+                devices = devicesResult.map(device => device.devEui);
                 console.log("Device count: " + devices.length);
             } catch (e) {
                 console.log("Yggio: Got exception: " + e.message);
