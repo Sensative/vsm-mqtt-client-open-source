@@ -108,7 +108,10 @@ exports.getMqttClient = () => {
 }
 
 exports.sendDownlink = async (args, deveui, port, buffer) => {
-  const integration = this.getIntegration();
+  if (!args || !deveui || !port || !buffer)
+    throw { message: "sendDownlink: Required argument missing"};
+
+  const integration = this.getIntegration(args);
   // Either below means that initialization did not succeed. Throw!
   if (!integration)
     throw { message: "sendDownlink: Integration not initialized."};
