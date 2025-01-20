@@ -90,9 +90,13 @@ exports.getIntegration = async (args) => {
   return integration;
 }
 
+let args_cache = undefined;
 // Exported for clients to use (intended for downlinks)
 exports.getArgs = () => {
-  return require('minimist')(process.argv.slice(2));
+  if (args_cache)
+    return args_cache;
+  args_cache = require('minimist')(process.argv.slice(2));
+  return args_cache;
 }
 
 // Assigned below in runClient
