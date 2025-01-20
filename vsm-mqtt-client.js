@@ -103,7 +103,7 @@ exports.getMqttClient = () => {
   return mqtt_client;
 }
 
-exports.sendDownlink = async (deveui, port, buffer) => {
+exports.sendDownlink = async (args, deveui, port, buffer) => {
   const integration = this.getIntegration();
   // Either below means that initialization did not succeed. Throw!
   if (!integration)
@@ -112,7 +112,7 @@ exports.sendDownlink = async (deveui, port, buffer) => {
   if (!this.getMqttClient())
     throw { message: "sendDownlink: MQTT not initialized."};
 
-  await integration.api.sendDownlink(this.getMqttClient(), this.getArgs(), deveui, port, Buffer.from(buffer, "hex"), false /* confirmed */ );
+  await integration.api.sendDownlink(this.getMqttClient(), args, deveui, port, Buffer.from(buffer, "hex"), false /* confirmed */ );
 }
 
 const run = async () => {
