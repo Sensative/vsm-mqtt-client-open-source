@@ -78,15 +78,6 @@ module.exports.api = {
                                     args.v && console.log(`Chirpstack subscribed ok to ${topic}`);
                             });
                         }
-                    } else {
-                        // Use wildcard for the subscription
-                        const topic = `application/${args.a}/device/+/event/up`;
-                        client.subscribe(topic, (err) => {
-                            if (err)
-                                console.log(`Chirpstack subscribe: ${topic} failed:` + err.message );
-                            else
-                                args.v && console.log(`Chirpstack subscribed ok to ${topic}`);
-                        });
                     }
                 });
                 client.on("message", async (topic, message) => {
