@@ -238,7 +238,9 @@ module.exports.processRules = async (args, integration, client, solver, deviceid
   // console.log("processRules - updates:", deviceid, updates);
   for (let i = 0; i < rules.length; ++i) {
     synthesized = await rules[i](args, integration, client, solver, deviceid, next, updates, date, lat, lng);
-    next = mergeDeep(next, synthesized);
+    if (synthesized) {
+      next = mergeDeep(next, synthesized);
+    }
   }
   return next;
 }
