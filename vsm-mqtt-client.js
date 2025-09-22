@@ -24,7 +24,7 @@ SOFTWARE.
 
 let translator;
 try {
-  translator = require('vsm-translator-open-source');
+  translator = require('@lifefinder/vsm-translator-open-source');
 } catch (e) {
   console.log("Failed to load VSM translator. Did you do yarn install?");
   process.exit(1);
@@ -191,7 +191,7 @@ const run = async () => {
   let solver = undefined;
   try {
     const location = process.env.VMC_SOLVERS ? process.env.VMC_SOLVERS : "./solvers";
-    solver = require(location + "/" + (args.z ? args.z : "loracloud"));
+    solver = require(location + "/" + (args.z ? args.z : "none"));
     if (!(solver.api && solver.api.getVersionString && solver.api.checkArgumentsOrExit && solver.api.solvePosition && solver.api.loadAlmanac && solver.api.initialize)) {
       console.log("Solver " + args.z + " lacks a required function");
       process.exit(1);
