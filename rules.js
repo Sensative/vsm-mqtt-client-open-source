@@ -214,11 +214,14 @@ const rules = [
     if (lastAttemptPeriodS < ALMANAC_DOWNLOAD_INTERVAL_S)
         return next; // Do not attempt a download now
     next.gnss.lastAlmanacDownloadAttempt = date;
+    console.log("Almanac update: Attempted")
 
     // Run this asynchronously rather than wait
-    if (!solver.api.downlinkAlmanac) {
+    if (!solver.api.loadAlmanac) {
+      console.log("Almanac update: failed No API")
       return next;
     }
+    console.log("Almanac update: API called")
     downlinkAlmanac(args, integration, client, solver, deviceid, next.encodedData.maxSize);
 
     return next;

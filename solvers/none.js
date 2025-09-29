@@ -24,7 +24,7 @@ SOFTWARE.
 This is a solver which has no implementation, e.g. you do not get positioning
 */
 
-const loraCloudLoadAlmanac = require('./combain-loracloud').loadAlmanac;
+const loraCloudLoadAlmanac = require('./combain-loracloud').api.loadAlmanac;
 
 module.exports.api = {
     initialize : async (args) => { return undefined; },
@@ -33,7 +33,7 @@ module.exports.api = {
         if (!args.k)
             return undefined; 
         // The almanac loading procedure may be valid also for non-loracloud solvers
-        return loraCloudLoadAlmanac.loadAlmanac(args);
+        return loraCloudLoadAlmanac(args);
     },
     checkArgumentsOrExit: (args)=>{if (args.k) console.log("No position solver, using loracloud key (-k) for almanac downloads") },
     getVersionString: ()=>"No Position Solver",
