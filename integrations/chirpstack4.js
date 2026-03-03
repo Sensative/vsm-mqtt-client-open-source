@@ -1,6 +1,27 @@
 const mqtt = require('mqtt')
 const { isDate } = require('util/types');
 
+const extractLoraInfo = (obj) => {
+    const info = {};
+    if (obj.rxInfo && obj.rxInfo.length > 0) {
+        const best = obj.rxInfo.reduce((a, b) => ((b.rssi || -999) > (a.rssi || -999) ? b : a), obj.rxInfo[0]);
+        if (typeof best.rssi === 'number') info.rssi = best.rssi;
+        if (typeof best.snr === 'number') info.snr = best.snr;
+        info.gatewayCount = obj.rxInfo.length;
+    }
+    if (obj.txInfo) {
+        if (obj.txInfo.frequency) info.frequency = obj.txInfo.frequency;
+        if (obj.txInfo.modulation && obj.txInfo.modulation.lora) {
+            const lora = obj.txInfo.modulation.lora;
+            if (lora.spreadingFactor) info.spreadingFactor = lora.spreadingFactor;
+            if (lora.bandwidth) info.bandwidth = lora.bandwidth;
+        }
+    }
+    if (Number.isInteger(obj.dr)) info.dataRate = obj.dr;
+    info.timestamp = new Date().toISOString();
+    return info;
+};
+
 const printUsageAndExit = (info) => {
     console.log(info);
     process.exit(1);
@@ -94,7 +115,7 @@ module.exports.api = {
                 if (! (date && isDate(date)))
                     date = new Date()
 
-                await onUplinkDevicePortBufferDateLatLng(client, id, port, data, date, lat, lng, maxSize);
+                await onUplinkDevicePortBufferDateLatLng(client, id, port, data, date, lat, lng, maxSize, extractLoraInfo(obj));
             });
             return client;
         } catch (e) {

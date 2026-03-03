@@ -211,7 +211,7 @@ const run = async () => {
     console.log('Series Processor: ', seriesProcessor.getName());
 
   // Function to handle uplinks for a device id on a port with binary data in buffer
-  const onUplinkDevicePortBufferDateLatLng = async (client, deviceid, port, buffer, date, lat, lng, maxSize) => {
+  const onUplinkDevicePortBufferDateLatLng = async (client, deviceid, port, buffer, date, lat, lng, maxSize, loraInfo) => {
     if (!(typeof(deviceid) == "string" && isFinite(port) && Buffer.isBuffer(buffer))) {
       console.log(`Integration error: Bad parameter to onUplinkDevicePortBufferDateLatLng:
                   typeof(deviceid):${typeof(deviceid)} (expect string), typeof(port)=${typeof(port)} (expect number), Buffer.isBuffer(buffer)=${Buffer.isBuffer(buffer)}`);
@@ -240,13 +240,14 @@ const run = async () => {
     }
 
     // Run translation
-    let iotnode = { ...previous, 
+    let iotnode = { ...previous,
       encodedData : {
           port : port,
           hexEncoded : buffer.toString('hex'),
           timestamp: date,  // TBD if this should be given by the integration instead?
           maxSize: maxSize,
-      }
+      },
+      ...(loraInfo && { lora: loraInfo }),
     }
     let result = {}
     try {
