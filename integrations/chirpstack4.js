@@ -1,3 +1,5 @@
+// Copyright (C) 2026, Lifefinder Systems International AB, all rights reserved.
+// ChirpStack v4 MQTT integration. Supports plain-password auth via CS4_* env vars.
 const mqtt = require('mqtt')
 const { isDate } = require('util/types');
 
@@ -50,7 +52,15 @@ module.exports.api = {
     connectAndSubscribe: async (args, devices, onUplinkDevicePortBufferDateLatLng) => {
         args.v && console.log("Trying to connect to " + args.s + " with application " + args.a);
         try {
-            const client  = mqtt.connect(args.s);
+            // Build connect options — auth required for mosquitto plain-password auth (CS4).
+            // Credentials read from env so the integration file stays config-free.
+            const mqttOpts = {};
+            if (process.env.CS4_USERNAME) {
+                mqttOpts.clientId = process.env.CS4_CLIENTID || 'vsm-mqtt-client-v4';
+                mqttOpts.username = process.env.CS4_USERNAME;
+                mqttOpts.password = process.env.CS4_PASSWORD;
+            }
+            const client = mqtt.connect(args.s, mqttOpts);
 
             client.on('connect', () => {
                 args.v && console.log("Connected to chirpstack server");
