@@ -62,6 +62,11 @@ module.exports.api = {
             }
             const client = mqtt.connect(args.s, mqttOpts);
 
+            client.on('error', (e) => {
+                console.log("MQTT ChirpStack 4 Connection Error", e);
+                process.exit(1);
+            });
+
             client.on('connect', () => {
                 args.v && console.log("Connected to chirpstack server");
 
@@ -103,9 +108,19 @@ module.exports.api = {
                 // message is Buffer
                 args.v && console.log(topic, message.toString());
 
-                const obj = JSON.parse(message.toString('utf-8'));
+                let obj;
+                try {
+                    obj = JSON.parse(message.toString('utf-8'));
+                } catch (e) {
+                    console.log("Chirpstack: failed to parse message: " + e.message);
+                    return;
+                }
                 if (!obj.data)
                     return;
+                if (!obj.deviceInfo || !obj.deviceInfo.devEui) {
+                    console.log("Chirpstack: message missing deviceInfo.devEui, skipping");
+                    return;
+                }
                 const data = Buffer.from(obj.data, "base64");
                 const port = obj.fPort;
                 const id = obj.deviceInfo.devEui;
@@ -122,7 +137,7 @@ module.exports.api = {
                     }
                     date = new Date(gwinfo.time);
                 }
-                if (! (date && isDate(date)))
+                if (!(date && isDate(date) && !isNaN(date.getTime())))
                     date = new Date()
 
                 await onUplinkDevicePortBufferDateLatLng(client, id, port, data, date, lat, lng, maxSize, extractLoraInfo(obj));
@@ -142,7 +157,7 @@ module.exports.api = {
             devEui: devEUI,
             confirmed,
             fPort: port,
-            payload: data.toString('base64'),
+            data: data.toString('base64'),
         };
         client.publish(topic, JSON.stringify(obj));
         args.v && console.log("Publish downlink on port " + port + " data: " + data.toString("hex"));
