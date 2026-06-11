@@ -103,7 +103,7 @@ exports.getMqttClient = () => {
   return mqtt_client;
 }
 
-exports.sendDownlink = async (args, deveui, port, buffer) => {
+exports.sendDownlink = async (args, deveui, port, buffer, confirmed = false) => {
   if (!args || !deveui || !port || !buffer)
     throw { message: "sendDownlink: Required argument missing"};
 
@@ -115,7 +115,7 @@ exports.sendDownlink = async (args, deveui, port, buffer) => {
   if (!this.getMqttClient())
     throw { message: "sendDownlink: MQTT not initialized."};
 
-  await integration.api.sendDownlink(this.getMqttClient(), args, deveui, port, Buffer.from(buffer, "hex"), false /* confirmed */ );
+  await integration.api.sendDownlink(this.getMqttClient(), args, deveui, port, Buffer.from(buffer, "hex"), confirmed === true);
 }
 
 const run = async () => {
