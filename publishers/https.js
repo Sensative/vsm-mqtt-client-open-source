@@ -23,7 +23,10 @@ module.exports.api = {
                 headers: {
                     "Accept": "application/json",
                     "Content-type" : "application/json",
-                    "cache-control": "no-cache"
+                    "cache-control": "no-cache",
+                    // lfndr-service /push is behind ingress auth (fail-closed): send the
+                    // shared secret when configured, matching keyfetch/series-processor.
+                    ...(process.env.INGRESS_SHARED_SECRET && { "X-Ingress-Secret": process.env.INGRESS_SHARED_SECRET })
               },}).then(response => response.json())
               .then(data => {console.log("  Response: ", data); return data; })
               .catch(err => {console.log("  HTTPS Publish Failed: " + err.message);});
