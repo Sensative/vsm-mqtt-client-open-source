@@ -281,10 +281,27 @@ const run = async () => {
     publisher.api.publish(args, deviceid, decorator.api.decorate(next, deviceid));
   }
 
+  // Called when a confirmed downlink is (n)acked by the device. Chirpstack does not
+  // retransmit an unacked confirmed downlink — it only reports the outcome — so this is
+  // the signal an application needs in order to resend one that was lost. Routed to the
+  // optional onDownlinkAck hook on the configured processor (VMC_PROCESSOR); integrations
+  // that do not report acks simply never call it.
+  const onDownlinkAckDeviceAcknowledged = async (client, deviceid, acknowledged, fCnt) => {
+    console.log("Downlink ack: device=" + deviceid + " acknowledged=" + acknowledged + " fCnt=" + fCnt);
+    if (!(seriesProcessor && seriesProcessor.onDownlinkAck))
+      return;
+    try {
+      await seriesProcessor.onDownlinkAck(deviceid, acknowledged, fCnt);
+    } catch (e) {
+      // Never let a processor failure take down the MQTT message loop.
+      console.log("Downlink ack processor failed: " + e.message);
+    }
+  }
+
   const runClient = async () => {
     // Let the integration create connection and add required subscriptions
     try {
-      mqtt_client = await integration.api.connectAndSubscribe(args, devices, onUplinkDevicePortBufferDateLatLng);
+      mqtt_client = await integration.api.connectAndSubscribe(args, devices, onUplinkDevicePortBufferDateLatLng, onDownlinkAckDeviceAcknowledged);
     } catch (e) {
       console.log("Failed to connect and subscribe: " + e.message);
       process.exit(1);

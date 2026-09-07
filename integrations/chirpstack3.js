@@ -47,7 +47,7 @@ module.exports.api = {
         if (!args.s)
             printUsageAndExit("Chirpstack: -s <server url> is required");
     },
-    connectAndSubscribe: async (args, devices, onUplinkDevicePortBufferDateLatLng) => {
+    connectAndSubscribe: async (args, devices, onUplinkDevicePortBufferDateLatLng, onDownlinkAckDeviceAcknowledged) => {
         args.v && console.log("Trying to connect to " + args.s + " with application " + args.a);
         try {
             let client;
@@ -83,30 +83,65 @@ module.exports.api = {
                 Instead:
                 */
 
+                // 'ack' carries the (n)ack for a confirmed downlink. Chirpstack never
+                // retransmits an unacked confirmed downlink itself — it only reports the
+                // outcome — so subscribing here is the only way an application can learn
+                // that a downlink was lost and resend it.
+                const events = ['up', 'ack'];
+                const subscribe = (topic) => client.subscribe(topic, (err) => {
+                    if (err)
+                        console.log(`Chirpstack subscribe: ${topic} failed:` + err.message );
+                    else
+                        args.v && console.log(`Chirpstack subscribed ok to ${topic}`);
+                });
+
                 if (Array.isArray(devices) && devices.length > 0) {
-                    for (let i = 0; i < devices.length; ++i) {
-                        const topic = `application/${args.a}/device/${devices[i].toLowerCase()}/event/up`;
-                        client.subscribe(topic, (err) => {
-                            if (err)
-                                console.log(`Chirpstack subscribe: ${topic} failed:` + err.message );
-                            else
-                                args.v && console.log(`Chirpstack subscribed ok to ${topic}`);
-                            });
-                    }
+                    for (let i = 0; i < devices.length; ++i)
+                        for (const event of events)
+                            subscribe(`application/${args.a}/device/${devices[i].toLowerCase()}/event/${event}`);
                 } else {
                     // Use wildcard for the subscription
-                    const topic = `application/${args.a}/device/+/event/up`;
-                    client.subscribe(topic, (err) => {
-                        if (err)
-                            console.log(`Chirpstack subscribe: ${topic} failed:` + err.message );
-                        else
-                            args.v && console.log(`Chirpstack subscribed ok to ${topic}`);
-                    });
+                    for (const event of events)
+                        subscribe(`application/${args.a}/device/+/event/${event}`);
                 }
                 });
+            // Topics are application/<id>/device/<devEUI>/event/<type>. Take the devEUI from
+            // the topic rather than the payload: it is unambiguous hex on both Chirpstack
+            // versions, whereas the payload field differs (v3 devEUI, v4 deviceInfo.devEui)
+            // and v3's protobuf JSON mapping can render bytes fields base64.
+            const parseEventTopic = (topic) => {
+                const parts = topic.split('/');
+                return { event: parts[parts.length - 1], deveui: parts[parts.length - 3] };
+            };
+
+            // Confirmed-downlink (n)ack. v3 reports devEUI and fCnt.
+            const handleAck = async (topic, message) => {
+                if (!onDownlinkAckDeviceAcknowledged)
+                    return;
+                let obj;
+                try {
+                    obj = JSON.parse(message.toString('utf-8'));
+                } catch (e) {
+                    console.log("Chirpstack: failed to parse ack message: " + e.message);
+                    return;
+                }
+                const { deveui } = parseEventTopic(topic);
+                const id = deveui || obj.devEUI;
+                if (!id) {
+                    console.log("Chirpstack: ack message without a resolvable devEUI, skipping");
+                    return;
+                }
+                await onDownlinkAckDeviceAcknowledged(client, id, obj.acknowledged === true, obj.fCnt);
+            };
+
             client.on('message', async (topic, message) => {
                 // message is Buffer
                 args.v && console.log(topic, message.toString());
+
+                if (parseEventTopic(topic).event === 'ack') {
+                    await handleAck(topic, message);
+                    return;
+                }
 
                 const obj = JSON.parse(message.toString('utf-8'));
                 if (!obj.data)
